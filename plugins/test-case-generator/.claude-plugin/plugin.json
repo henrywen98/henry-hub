@@ -1,8 +1,5 @@
 {
   "name": "test-case-generator",
   "version": "1.0.0",
-  "description": "From requirement docs to structured test cases (pipe-delimited text + formatted Excel). Based on SOP 7-layer methodology for B2B enterprise systems.",
-  "skills": [
-    "skills/generate-test-cases.md"
-  ]
+  "description": "From requirement docs to structured test cases (pipe-delimited text + formatted Excel). Based on SOP 7-layer methodology for B2B enterprise systems."
 }
