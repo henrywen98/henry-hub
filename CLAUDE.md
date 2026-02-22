@@ -41,7 +41,7 @@ Auto-discovery scans these directories automatically:
 
 ## Known Issues
 
-- `test-case-generator` plugin.json has `"skills": ["skills/generate-test-cases.md"]` which causes install failure. Fix: remove the `skills` field, rely on auto-discovery.
+None currently.
 
 ## Adding a New Plugin
 
@@ -54,14 +54,9 @@ Auto-discovery scans these directories automatically:
 
 ## Skill File Conventions
 
-Two patterns exist in this repo:
+All plugins use the **nested pattern**: `skills/<name>/SKILL.md`
 
-| Pattern | Example | Used By |
-|---------|---------|---------|
-| Nested: `skills/<name>/SKILL.md` | `skills/doc-coauthoring/SKILL.md` | Most plugins (12) |
-| Flat: `skills/<name>.md` | `skills/generate-test-cases.md` | test-case-generator |
-
-Prefer the **nested pattern** (`skills/<plugin-name>/SKILL.md`) for new plugins, consistent with the majority.
+Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name>.md` — they won't be discovered.
 
 ## Plugin Categories
 
