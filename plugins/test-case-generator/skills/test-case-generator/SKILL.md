@@ -1,5 +1,5 @@
 ---
-name: generate-test-cases
+name: test-case-generator
 description: >
   Generate structured test cases from requirement documents for B2B enterprise management systems.
   Applies SOP 7-layer methodology (Layer 0-6), outputs pipe-delimited text and converts to formatted Excel (.xlsx).
