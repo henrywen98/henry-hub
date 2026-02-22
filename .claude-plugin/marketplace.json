@@ -19,6 +19,7 @@
     { "name": "gen-requirement-doc", "description": "需求确认单生成器", "source": "./plugins/gen-requirement-doc" },
     { "name": "ai-pm-feedback-collector", "description": "AI产品经理反馈收集器", "source": "./plugins/ai-pm-feedback-collector" },
     { "name": "github-issue-generator", "description": "GitHub Issue 生成器", "source": "./plugins/github-issue-generator" },
+    { "name": "prd-review-board", "description": "PRD 多专家红队评审工作流", "source": "./plugins/prd-review-board" },
     { "name": "code-simplifier", "description": "代码简化与优化", "source": "./plugins/code-simplifier" },
     { "name": "superpowers", "description": "核心技能库：TDD、调试、协作", "source": "./plugins/superpowers" }
   ]

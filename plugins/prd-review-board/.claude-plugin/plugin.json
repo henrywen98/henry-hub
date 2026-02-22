@@ -1,0 +1,5 @@
+{
+  "name": "prd-review-board",
+  "version": "1.0.0",
+  "description": "PRD 多专家红队评审工作流。使用 Team Swarm 组建 14 位跨职能专家，对 PRD 进行独立评审、红队压力测试、3 轮真实辩论，输出修订版 PRD 和综合评审报告。"
+}
