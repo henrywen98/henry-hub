@@ -1,6 +1,6 @@
 # Henry Hub Marketplace
 
-> Version: v0.1.5 (2026-02-22)
+> Version: v0.2.0 (2026-02-22)
 
 Personal Claude Code plugin marketplace (`henrywen98/henry-hub`).
 
@@ -65,16 +65,20 @@ Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name
 | Category | Plugins |
 |----------|---------|
 | Document Processing | docx, pdf, pptx, xlsx |
-| Requirements & Workflow | doc-coauthoring, prd-workflow, gen-requirement-doc, ai-pm-feedback-collector, github-issue-generator |
-| Testing | test-case-generator, comprehensive-test-generation |
+| Requirements & Workflow | doc-coauthoring, prd-workflow, gen-requirement-doc, ai-pm-feedback-collector, github-issue-generator, bmad-prd-agent |
+| Testing | test-case-generator, comprehensive-test-generation, bmad-qa-agent |
 | Dev Tools | batch-commit, ssot-prompt-engineer, code-simplifier (fork), superpowers (fork) |
 
 ## Forked Plugins
 
 - `code-simplifier` — forked from Anthropic official, has `agents/` only
 - `superpowers` — forked from obra/superpowers v4.3.1, full plugin (skills, agents, commands, hooks)
+- `bmad-qa-agent` — extracted from BMAD-METHOD v6.0.1 (Quinn QA Engineer)
+- `bmad-prd-agent` — extracted from BMAD-METHOD v6.0.1 (John Product Manager)
 
 When updating forks, preserve the original `author`, `license`, and attribution.
+
+When updating BMAD-extracted plugins, preserve attribution to bmad-code-org and MIT License.
 
 ## Versioning
 

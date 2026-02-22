@@ -38,6 +38,7 @@ Henry 的个人 Claude Code 插件市场，统一管理自建 skills 和常用�
 | gen-requirement-doc | 需求确认单生成器 | `/plugins install gen-requirement-doc@henry-hub` |
 | ai-pm-feedback-collector | 客户反馈整理为结构化需求文档 | `/plugins install ai-pm-feedback-collector@henry-hub` |
 | github-issue-generator | 信息整理为标准 GitHub Issue 格式 | `/plugins install github-issue-generator@henry-hub` |
+| bmad-prd-agent | 产品经理 Agent (John, 基于 BMAD) - PRD 全生命周期 | `/plugins install bmad-prd-agent@henry-hub` |
 
 ### 测试
 
@@ -45,6 +46,7 @@ Henry 的个人 Claude Code 插件市场，统一管理自建 skills 和常用�
 |------|------|----------|
 | test-case-generator | 从需求文档生成结构化测试用例 + Excel | `/plugins install test-case-generator@henry-hub` |
 | comprehensive-test-generation | 全面测试生成策略（E2E/API/Unit） | `/plugins install comprehensive-test-generation@henry-hub` |
+| bmad-qa-agent | QA 自动化测试生成 Agent (Quinn, 基于 BMAD) | `/plugins install bmad-qa-agent@henry-hub` |
 
 ### 内容创作
 
@@ -64,5 +66,6 @@ Henry 的个人 Claude Code 插件市场，统一管理自建 skills 和常用�
 ## 说明
 
 - 大部分插件为自建 skills，部分（code-simplifier、superpowers）为官方插件的 fork
+- 部分插件（bmad-qa-agent、bmad-prd-agent）基于 BMAD-METHOD (MIT License) 提取
 - 每个插件目录下都有中文 README.md，详细说明用途和使用方式
 - 欢迎团队成员订阅使用
