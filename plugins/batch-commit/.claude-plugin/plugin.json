@@ -1,0 +1,5 @@
+{
+  "name": "batch-commit",
+  "version": "1.0.0",
+  "description": "批量智能提交工具 - 将工作区变更按功能模块智能分组，生成多个原子化的 Conventional Commits"
+}

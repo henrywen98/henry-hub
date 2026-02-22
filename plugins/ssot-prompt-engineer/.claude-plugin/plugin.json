@@ -1,0 +1,5 @@
+{
+  "name": "ssot-prompt-engineer",
+  "version": "1.0.0",
+  "description": "SSOT-Driven Prompt Engineering: Extract transformation rules from input-output pairs, codify them as a Single Source of Truth (SSOT), then derive prompts and tooling from the SSOT. Use when the user wants to analyze how inputs map to outputs and extract the underlying rules, create a prompt toolkit from existing examples or templates, reverse-engineer an SOP from sample inputs and outputs, build reusable prompt systems where rules are separated from prompt templates, or formalize tacit domain knowledge into structured generation rules."
+}

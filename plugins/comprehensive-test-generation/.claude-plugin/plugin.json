@@ -1,0 +1,5 @@
+{
+  "name": "comprehensive-test-generation",
+  "version": "1.0.0",
+  "description": "Generate comprehensive test suites from requirements and existing code through a structured four-phase process: explore, design master strategy, dispatch self-sufficient sub-agents, verify and handoff."
+}

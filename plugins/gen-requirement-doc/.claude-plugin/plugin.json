@@ -1,0 +1,5 @@
+{
+  "name": "gen-requirement-doc",
+  "version": "1.0.0",
+  "description": "需求确认单生成器。将各类需求素材统一输出为标准需求确认单格式。"
+}

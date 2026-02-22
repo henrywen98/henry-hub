@@ -1,0 +1,5 @@
+{
+  "name": "prd-workflow",
+  "version": "1.0.0",
+  "description": "PRD 需求规格文档工作流。通过 /prd.create 和 /prd.clarify 命令创建和完善需求规格文档。"
+}

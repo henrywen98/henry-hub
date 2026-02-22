@@ -1,0 +1,5 @@
+{
+  "name": "ai-pm-feedback-collector",
+  "version": "1.0.0",
+  "description": "AI产品经理需求收集与整理工具。将客户反馈快速整理成结构化文档，包括Bug描述、优化建议、优先级排序。"
+}
