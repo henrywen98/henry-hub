@@ -1,0 +1,5 @@
+{
+  "name": "bmad-prd-agent",
+  "version": "1.0.0",
+  "description": "产品经理 Agent（基于 BMAD Method John）。PRD 创建/验证/编辑 + Epics/Stories + 实现准备检查 + 纠偏。"
+}
