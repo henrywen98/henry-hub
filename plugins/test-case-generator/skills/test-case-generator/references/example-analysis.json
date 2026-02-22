@@ -1,0 +1,65 @@
+{
+  "module_name": "资源池",
+  "module_code": "JJRCGL-GSBG",
+  "source_doc": "需求文档.docx",
+  "dispatch": {
+    "has_ui": true,
+    "has_data_entry": true,
+    "has_data_modify": true,
+    "has_business_logic": true,
+    "has_data_cleanup": false
+  },
+  "field_table": [
+    {
+      "name": "登记状态",
+      "type": "radio",
+      "required": true,
+      "max_length": null,
+      "rules": "已注册/未注册，影响企业全称输入方式",
+      "interactions": ["condition_show"]
+    },
+    {
+      "name": "企业全称",
+      "type": "search_select",
+      "required": true,
+      "max_length": 200,
+      "rules": "已注册时从工商库搜索选择, 未注册时手动输入",
+      "interactions": ["condition_show", "cascade_fill"]
+    },
+    {
+      "name": "企业简称",
+      "type": "text",
+      "required": true,
+      "max_length": 50,
+      "rules": "已注册时自动填充, 可手动修改",
+      "interactions": ["cascade_fill"]
+    },
+    {
+      "name": "企业类型",
+      "type": "dropdown",
+      "required": true,
+      "max_length": null,
+      "rules": "选项: 参股基金/参股基金管理人/股权项目",
+      "interactions": []
+    },
+    {
+      "name": "统一社会信用代码",
+      "type": "text",
+      "required": false,
+      "max_length": 18,
+      "rules": "已注册时自动填充且不可编辑",
+      "interactions": ["cascade_fill"]
+    },
+    {
+      "name": "登记机关",
+      "type": "text",
+      "required": false,
+      "max_length": 100,
+      "rules": "已注册时自动填充且不可编辑",
+      "interactions": ["cascade_fill"]
+    }
+  ],
+  "business_rules_summary": "入库审批流程: 提交→审批→入库; 入库后部分字段不可编辑; 未入库状态可编辑/删除",
+  "filter_fields": ["企业名称/项目简称", "企业类型", "是否已入库"],
+  "list_fields": ["序号", "企业全称", "企业简称", "企业类型", "是否入库", "操作"]
+}

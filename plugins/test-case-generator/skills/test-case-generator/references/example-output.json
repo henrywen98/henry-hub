@@ -1,0 +1,171 @@
+{
+  "version": "1.0",
+  "meta": {
+    "module_name": "自管基金-基金日常管理",
+    "module_code": "JJRCGL-GSBG",
+    "designer": "朱康娅",
+    "design_date": "2026/01/20",
+    "source_doc": "需求文档.docx"
+  },
+  "style": {
+    "title_bar": {
+      "text": "功能测试用例",
+      "font_name": "微软雅黑",
+      "font_size": 12,
+      "bold": true,
+      "font_color": "#FFCC99",
+      "fill_color": "#993300"
+    },
+    "summary_bar": {
+      "labels": ["测试设计", "", "", "", "", "", "测试结果", "", "数量"],
+      "result_labels": ["Pass", "Fail", "Blocked"],
+      "font_name": "微软雅黑",
+      "font_size": 11,
+      "bold": true,
+      "fill_color": "#305496"
+    },
+    "info_bar": {
+      "merge_cols": "A:C",
+      "font_name": "微软雅黑",
+      "font_size": 11,
+      "bold": true
+    },
+    "header_row": {
+      "columns": [
+        {"key": "id",           "label": "序号",     "width": 19},
+        {"key": "module",       "label": "功能模块",  "width": 17},
+        {"key": "sub_module",   "label": "子模块",    "width": 14},
+        {"key": "test_point",   "label": "测试点",    "width": 24},
+        {"key": "case_name",    "label": "用例名称",  "width": 27},
+        {"key": "precondition", "label": "前提条件",  "width": 31},
+        {"key": "steps",        "label": "操作步骤",  "width": 45},
+        {"key": "expected",     "label": "预期结果",  "width": 56},
+        {"key": "note",         "label": "用例备注",  "width": 9},
+        {"key": "self_test",    "label": "自测结果",  "width": 9},
+        {"key": "developer",    "label": "开发人员",  "width": 9},
+        {"key": "self_date",    "label": "自测日期",  "width": 9},
+        {"key": "priority",     "label": "优先级",    "width": 9},
+        {"key": "exec_result",  "label": "执行结果",  "width": 9},
+        {"key": "tester",       "label": "测试人员",  "width": 9},
+        {"key": "test_date",    "label": "测试日期",  "width": 9},
+        {"key": "remark",       "label": "备注",      "width": 9}
+      ],
+      "font_name": "微软雅黑",
+      "font_size": 11,
+      "bold": true,
+      "fill_color": "#9BC2E6",
+      "alignment": {"horizontal": "left", "vertical": "top", "wrap_text": true},
+      "border": "thin"
+    },
+    "section_row": {
+      "font_name": "微软雅黑",
+      "font_size": 11,
+      "bold": true,
+      "fill_color": "#C0C0C0",
+      "border": "thin"
+    },
+    "data_row": {
+      "font_name": "微软雅黑",
+      "font_size": 11,
+      "bold": false,
+      "alignment": {"horizontal": "left", "vertical": "top", "wrap_text": true},
+      "border": "thin"
+    }
+  },
+  "sections": [
+    {
+      "title": "基金日常管理（JJRCGL-GSBG）",
+      "test_cases": [
+        {
+          "id": "JJRCGL-GSBG_001",
+          "module": "资源池",
+          "sub_module": "列表页",
+          "test_point": "页面入口检查",
+          "case_name": "资源池列表页面访问权限与入口测试",
+          "precondition": "用户已登录投资管理平台",
+          "steps": "1.点击左侧菜单\"资源池列表\"\n2.未登录用户直接访问资源池列表URL\n3.通过浏览器后退/前进键操作\n4.刷新页面\n5.在其它浏览器标签打开相同页面",
+          "expected": "1.正确跳转至资源池列表页面\n2.跳转至登录页面或提示未登录\n3.页面能正常回退/前进\n4.页面刷新后保持当前状态\n5.能正常打开并显示数据",
+          "note": "",
+          "priority": ""
+        },
+        {
+          "id": "JJRCGL-GSBG_002",
+          "module": "资源池",
+          "sub_module": "列表页",
+          "test_point": "页面布局与显示",
+          "case_name": "资源池列表页面整体布局与元素显示测试",
+          "precondition": "用户已登录并进入资源池列表页面",
+          "steps": "1.检查页面标题是否为\"资源池列表\"\n2.检查LOGO和系统名称是否正确显示\n3.检查左侧菜单栏是否完整\n4.检查页面加载速度是否在3秒内\n5.检查浏览器标签页标题是否正确",
+          "expected": "1.页面标题显示正确\n2.LOGO和系统名称显示正常\n3.菜单项完整且可点击\n4.页面在3秒内完成加载\n5.浏览器标签页显示正确",
+          "note": "",
+          "priority": ""
+        },
+        {
+          "id": "JJRCGL-GSBG_003",
+          "module": "资源池",
+          "sub_module": "列表页",
+          "test_point": "搜索框功能",
+          "case_name": "企业名称/项目简称搜索功能完整性测试",
+          "precondition": "用户已登录并进入资源池列表页面",
+          "steps": "1.输入完整企业全称点击搜索\n2.输入企业简称点击搜索\n3.输入空格点击搜索\n4.输入特殊字符点击搜索\n5.输入超长字符串(>100字符)点击搜索\n6.不输入内容直接点击搜索\n7.输入内容后点击清空\n8.搜索后修改搜索词再次搜索",
+          "expected": "1.显示匹配的企业记录\n2.显示包含简称的企业记录\n3.显示全部记录或提示无效\n4.显示无记录或提示格式错误\n5.显示无记录或提示过长\n6.显示全部记录\n7.搜索框清空并显示全部记录\n8.搜索结果更新为新条件",
+          "note": "",
+          "priority": ""
+        },
+        {
+          "id": "JJRCGL-GSBG_004",
+          "module": "资源池",
+          "sub_module": "列表页",
+          "test_point": "企业类型筛选",
+          "case_name": "企业类型筛选功能测试",
+          "precondition": "用户已登录并进入资源池列表页面",
+          "steps": "1.选择\"不限\"\n2.选择\"参股基金\"\n3.选择\"参股基金管理人\"\n4.选择\"股权项目\"\n5.快速连续切换不同选项\n6.筛选后清除筛选条件",
+          "expected": "1.显示全部类型企业\n2.仅显示参股基金类企业\n3.仅显示参股基金管理人类企业\n4.仅显示股权项目类企业\n5.筛选结果能正确更新\n6.恢复显示全部记录",
+          "note": "",
+          "priority": ""
+        },
+        {
+          "id": "JJRCGL-GSBG_005",
+          "module": "资源池",
+          "sub_module": "列表页",
+          "test_point": "入库状态筛选",
+          "case_name": "是否已入库筛选功能测试",
+          "precondition": "用户已登录并进入资源池列表页面",
+          "steps": "1.选择\"不限\"\n2.选择\"未入库\"\n3.选择\"已入库\"\n4.筛选状态下刷新页面\n5.检查筛选后列表行内状态显示是否一致",
+          "expected": "1.显示全部状态企业\n2.仅显示未入库企业\n3.仅显示已入库企业\n4.页面刷新后保持筛选状态\n5.列表行内状态与筛选条件匹配",
+          "note": "",
+          "priority": ""
+        },
+        {
+          "id": "JJRCGL-GSBG_006",
+          "module": "资源池",
+          "sub_module": "新增资源池",
+          "test_point": "字段联动-登记状态影响企业全称",
+          "case_name": "登记状态切换时企业全称输入方式联动验证",
+          "precondition": "用户已登录并打开新增资源池弹窗",
+          "steps": "1.选择登记状态为\"已注册\"\n2.检查企业全称字段的交互方式\n3.在企业全称输入关键字, 从下拉中选择一个企业\n4.检查登记机关、统一社会信用代码等关联字段\n5.切换登记状态为\"未注册\"\n6.检查企业全称字段的交互方式\n7.手动输入企业全称",
+          "expected": "1.登记状态选中\"已注册\"\n2.企业全称变为搜索选择模式\n3.下拉展示匹配结果, 选择后企业全称自动填入\n4.关联字段根据工商信息自动填充且不可编辑\n5.登记状态切换为\"未注册\"\n6.企业全称变为普通文本输入框\n7.可自由输入企业全称",
+          "note": "",
+          "priority": ""
+        },
+        {
+          "id": "JJRCGL-GSBG_007",
+          "module": "资源池",
+          "sub_module": "入库审批",
+          "test_point": "审批流程-提交审批",
+          "case_name": "资源池入库提交审批及状态变更验证",
+          "precondition": "用户已登录并进入资源池列表页面, 存在未入库状态的资源池记录",
+          "steps": "1.选择一条未入库状态的记录\n2.点击\"提交审批\"按钮\n3.确认提交\n4.检查该记录状态\n5.尝试编辑该记录的受限字段",
+          "expected": "1.记录被选中\n2.弹出提交确认弹窗\n3.提交成功, 提示\"已提交审批\"\n4.记录状态变为\"审批中\"\n5.受限字段不可编辑, 显示为只读状态",
+          "note": "",
+          "priority": ""
+        }
+      ]
+    }
+  ],
+  "merge_rules": {
+    "module": "same_value",
+    "sub_module": "same_value",
+    "test_point": "same_value"
+  }
+}

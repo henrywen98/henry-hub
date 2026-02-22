@@ -1,48 +1,76 @@
-# test-case-generator
+# 测试用例生成器 (test-case-generator)
 
-需求文档到结构化测试用例的一站式生成工具。基于 SOP 7 层方法论（Layer 0-6），从需求文档自动生成管道符分隔的文本用例，并转换为格式化的 Excel（.xlsx）文件。专为 B2B 企业管理系统设计。
+从需求文档自动生成结构化测试用例，输出格式化 Excel 文件。
 
-## 使用场景
+## 架构
 
-- 当你拿到一份需求文档（.md / .txt / .docx），需要编写完整的测试用例时
-- 适用于包含列表页、表单页、搜索、审批流等典型 B2B 业务模块的测试用例生成
-- 提供需求文档路径或直接粘贴需求内容即可触发
-
-## 安装
+采用 **编排器 + 并行子 Agent** 架构：
 
 ```
-/plugins install test-case-generator@henry-hub
+编排器（Orchestrator）
+ ├─ 读取需求文档（pandoc/Read）
+ ├─ Task: 结构分析 → analysis.json
+ ├─ Task[并行]: Agent A/B/C/D → partial_*.json
+ ├─ Task: 合并去重 → {module_code}_testcases.json
+ ├─ python3 convert_to_xlsx.py → 格式化 Excel
+ └─ 清理缓存
 ```
 
-## 使用示例
+### 7 层 SOP 框架
+
+| 层级 | 名称 | 触发条件 |
+|------|------|----------|
+| L0 | 基础验证 | 始终 |
+| L1 | 展示层 | 始终 |
+| L2 | 交互筛选 | 始终 |
+| L3 | 数据输入 | 有新增/导入功能 |
+| L4 | 数据修改 | 有编辑/修改功能 |
+| L5 | 业务规则 | 有审批/状态/计算 |
+| L6 | 数据清理 | 有删除/作废功能 |
+
+### 子 Agent 分工
+
+- **Agent A**: L0+L1+L2（页面展示、筛选交互）— 始终派遣
+- **Agent B**: L3（数据输入验证）— 有新增功能时派遣
+- **Agent C**: L4（数据修改验证）— 有编辑功能时派遣
+- **Agent D**: L5+L6（业务规则、数据清理）— 有业务逻辑/删除时派遣
+
+## 使用方法
 
 ```
-> /generate-test-cases ./docs/项目管理需求.md
-
-Phase 1: 读取并分析需求文档...
-已识别模块：产业投资 - 项目管理
-请确认以下信息：
-  - 模块名称：产业投资
-  - 子模块名称：项目管理
-  - 模块缩写：CYTZ
-  - 子模块缩写：XMGL
-  - 输出文件名：项目管理_测试用例.xlsx
-
-> 确认
-
-Phase 2: 生成框架...
-  子功能列表：列表、查询、新增、编辑、删除、审批
-  预估用例数：156 条
-  复杂度评估：复杂（将分 4 轮生成）
-
-Phase 3-4: 分轮生成用例...
-  Round 1/4: 公用 + 列表 + 查询 (42 条) ✓
-  Round 2/4: 新增表单 (38 条) ✓
-  Round 3/4: 编辑表单 (41 条) ✓
-  Round 4/4: 业务逻辑 + 删除 (35 条) ✓
-
-Phase 5: 转换为 Excel...
-生成完成！共 156 条测试用例
-  文本文件：项目管理_用例.txt
-  Excel 文件：项目管理_测试用例.xlsx
+/test-case-generator [doc_path]
 ```
+
+- `doc_path`：需求文档路径（支持 .docx / .pdf / .md / .txt），可省略后直接粘贴内容
+
+## 输出
+
+- **JSON 中间文件**：`{module_code}_testcases.json`（结构化数据，可二次处理）
+- **Excel 文件**：`{module_code}_testcases.xlsx`（17 列标准模板，含标题栏、汇总栏、COUNTIF 公式、单元格合并）
+
+## 目录结构
+
+```
+test-case-generator/
+├── .claude-plugin/plugin.json
+├── README.md
+├── skills/
+│   └── test-case-generator/
+│       ├── SKILL.md                          # 主技能文件
+│       └── references/
+│           ├── analysis-schema.md            # 分析阶段输出格式
+│           ├── json-schema.md                # 测试用例 JSON 格式
+│           ├── example-output.json           # 示例输出
+│           ├── excel-template-spec.md        # Excel 模板规范
+│           └── sop-layers.md                 # 7 层 SOP 详细规则
+└── scripts/
+    ├── convert_to_xlsx.py                    # JSON → Excel 转换脚本
+    ├── test_convert.py                       # 转换脚本测试
+    └── requirements.txt                      # Python 依赖
+```
+
+## 依赖
+
+- Python 3.8+
+- openpyxl >= 3.1.0（`pip3 install openpyxl`）
+- pandoc（读取 .docx 文件时需要）

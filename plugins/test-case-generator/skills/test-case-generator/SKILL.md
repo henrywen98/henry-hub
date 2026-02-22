@@ -1,331 +1,187 @@
 ---
 name: test-case-generator
-description: >
-  Generate structured test cases from requirement documents for B2B enterprise management systems.
-  Applies SOP 7-layer methodology (Layer 0-6), outputs pipe-delimited text and converts to formatted Excel (.xlsx).
-  Supports auto-splitting for complex modules. Trigger: user provides a requirement doc and wants test cases generated.
+description: >-
+  Generate structured test cases from requirement documents, create functional test cases,
+  convert requirements to test cases in Excel format.
+  当用户说「生成测试用例」「需求文档转测试用例」「从需求生成用例」「写测试用例」时触发。
+  Supports Word/PDF/text input, outputs formatted .xlsx with 17-column company template.
 user-invocable: true
 arguments:
-  - name: requirement_doc
-    description: Path to the requirement document file (.md, .txt, .docx), or paste content directly
-    required: true
+  - name: doc_path
+    description: "Path to requirement document (Word/PDF/text), or omit to paste content directly"
+    required: false
 ---
 
 # Test Case Generation Skill
 
-You are a senior QA test engineer specializing in B2B enterprise management systems. Your task is to generate structured, high-coverage test cases from a requirement document using the standardized SOP 7-layer methodology.
+Generate standardized functional test cases from requirement documents using a 7-layer SOP framework.
 
-## Workflow
+**Input:** Requirement document (Word/PDF/text) or pasted content
+**Output:** Formatted Excel file (.xlsx) matching company template
 
-Follow these steps in order:
+## Orchestration Overview
 
-### Phase 1: Read & Analyze Requirement Document
+This skill runs as a lightweight orchestrator. Each heavy phase is dispatched as a Task sub-agent with isolated context. The orchestrator's own context stays under ~5KB.
 
-1. Read the requirement document provided by the user via `$ARGUMENTS`
-2. Extract and identify these structural components:
-   - Business function description
-   - Field specifications (list page, add form, edit form)
-   - Business logic rules
-   - Search/filter conditions
-   - Approval workflows (if any)
-   - Prototype references
-3. Ask the user to confirm:
-   - **Module name** (功能模块名称) and **Sub-module name** (子模块名称)
-   - **Module abbreviation** (模块缩写) and **Sub-module abbreviation** (子模块缩写)
-   - **Output file name** for the Excel
-   - Whether to attach prototype screenshots (if applicable)
+```
+Orchestrator
+ ├─ Read document (pandoc/Read — lightweight, no Task needed)
+ ├─ Task: Analyze → writes cache/analysis.json
+ ├─ Read analysis.json (~2KB) → decide dispatch, report to user
+ ├─ Task[parallel]: Agent A/B/C/D → write cache/partial_*.json
+ ├─ Task: Merge → writes {output}/{code}_testcases.json
+ ├─ Bash: python3 convert_to_xlsx.py
+ └─ Bash: rm -rf cache_dir
+```
 
-### Phase 2: Framework Generation (Step 1)
+## Global Rules for All Sub-Agents
 
-Generate a framework overview and present it to the user:
+All Task sub-agents share these rules:
 
-1. **Sub-function list** — all sub-functions in this module
-2. **Test point classification & estimated count** — by SOP Layer 0-6
-3. **Numbering scheme** — prefix for each function group
-4. **Key business rules** — rules needing special attention
-5. **Conditional linkage list** — all field linkage combinations
-6. **Total estimated count**
+- Read reference files from `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/` as needed (sop-layers.md, json-schema.md, analysis-schema.md, example-analysis.json, example-output.json, excel-template-spec.md)
+- Output ONLY a raw JSON array of test case objects (no wrapper, no markdown fences)
+- Use "TEMP_NNN" as placeholder IDs (e.g., "TEMP_001", "TEMP_002")
+- steps/expected: use `\n` between numbered items, each starting with `N.` (no space after number)
+- precondition: include current page/dialog location, e.g., "用户已登录并打开新增弹窗"
+- Follow the Writing Guidelines and 用例精简规则 in sop-layers.md
+- **去重原则:** UI 呈现（按钮显示/隐藏/置灰/文案）由 Agent A 覆盖。Agent C/D 在步骤中可引用按钮状态作为前提，但不生成重复的 UI 检查用例。
 
-Wait for user confirmation before proceeding.
+## Step 1: Read Requirement Document
 
-### Phase 3: Complexity Assessment & Split Decision
+Read the requirement document provided by the user. This runs in the orchestrator (no Task needed).
 
-Assess complexity based on:
-- Number of form fields (>20 = complex)
-- Number of business rules (>5 = complex)
-- Number of conditional linkages (>3 = complex)
-- Estimated total test cases (>100 = complex)
+- **Word (.docx):** Use `pandoc -f docx -t markdown "$doc_path"` (fallback: python-docx)
+- **PDF:** Use PyMuPDF (`python3 -c "import fitz; ..."`) or the `pdf` skill if installed
+- **Text/Markdown:** Read directly with the Read tool
+- **No path given:** Ask user to paste the requirement content
 
-**If complex**: auto-split into rounds:
-| Round | Scope | Layers |
-|-------|-------|--------|
-| 1 | Common + List + Search | Layer 0 + 1 + 2 |
-| 2 | Add form | Layer 3 (add) + Layer 4 (add save) |
-| 3 | Edit form | Layer 3 (edit) + Layer 4 (edit save) |
-| 4 | Business logic + Delete | Layer 5 + 6 |
+After reading, confirm: "已读取需求文档：{filename}，共 N 页/段落。开始分析..."
 
-Inform the user of the split plan. Generate each round sequentially, appending results.
+Set up the cache directory:
+```
+cache_dir = {output_dir}/.testcase-cache/
+mkdir -p {cache_dir}
+```
 
-**If simple**: generate all layers in one pass.
+Where `output_dir` = same directory as input doc, or cwd if content was pasted.
 
-### Phase 4: Test Case Generation
+## Step 2: Structural Analysis (Task sub-agent)
 
-Generate test cases following ALL rules below. Save each round's output by appending to a `.txt` file in the current working directory.
+Dispatch a Task sub-agent with:
+- **Prompt:** Include the full requirement document text, and instruct it to read `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/analysis-schema.md` for the output format
+- **Goal:** Analyze the requirement and write `{cache_dir}/analysis.json`
+- **subagent_type:** `general-purpose`
 
-### Phase 5: Convert to Excel
+The agent must:
+1. Extract module_name, module_code, source_doc
+2. Build the field_table with correct `type` and `interactions` values
+3. Determine dispatch flags (has_ui, has_data_entry, has_data_modify, has_business_logic, has_data_cleanup)
+4. Summarize business rules
+5. List filter_fields and list_fields
+6. Write the result as JSON to `{cache_dir}/analysis.json`
 
-After all rounds complete:
-1. Save the combined text output to `{sub_module_name}_用例.txt`
-2. Run the conversion script:
+After the Task completes, the orchestrator:
+1. Reads `{cache_dir}/analysis.json` (~2KB)
+2. Reports to user:
    ```
-   python ${CLAUDE_PLUGIN_ROOT}/convert_to_xlsx.py {sub_module_name}_用例.txt {output_filename}.xlsx {sheet_name}
+   模块名称: {module_name}
+   模块代码: {module_code}
+   识别到 {N} 个字段, 其中 {M} 个有跨字段交互
+   派遣方案:
+   - Agent A: L0+L1+L2 (数据展示/筛选)
+   - Agent B: L3 (数据新增) — Yes/No
+   - Agent C: L4 (数据编辑) — Yes/No
+   - Agent D: L5+L6 (业务规则/删除) — Yes/No
+   正在并行派遣子代理...
    ```
-3. Report the results to the user: total test case count, file paths
 
----
+## Step 3: Dispatch Sub-Agents (PARALLEL)
 
-## Generation Rules (SSOT)
+Dispatch all applicable agents in a **SINGLE message with multiple parallel Task tool calls**.
 
-All rules below are the Single Source of Truth. Follow them exactly.
+Each agent's Task prompt includes:
+- The document path (agent reads it themselves via Read tool)
+- module_name and module_code from analysis.json
+- The field_table from analysis.json (for Agent B/C)
+- The business_rules_summary from analysis.json (for Agent D)
+- Reference file paths: `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/sop-layers.md`, `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/json-schema.md`, `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/example-output.json`
+- Output path: `{cache_dir}/partial_{agent_letter}.json`
+- The Global Rules above
 
-### Output Format
+### Agent A — L0+L1+L2 (Always dispatched)
 
-Use exactly 8 columns per line, separated by `|`:
+Layers: L0 (基础验证), L1 (展示), L2 (交互筛选).
 
-```
-序号|功能模块|子模块|前提条件|测试点|用例名称|操作步骤|预期结果
-```
+Focus: menu/data permissions, UI standards, page layout, list fields/buttons, pagination, sorting, empty state, search/filter/date-range/combo-query/reset.
 
-Rules:
-1. Each test case occupies one line
-2. Insert a **group title row** between function groups — only the first column has the group name, other columns are empty. Format: `列表（ZYC-XZ-L）`
-3. Within a group, columns "功能模块", "子模块", "前提条件" are filled only in the **first row** of the group; subsequent rows leave these 3 columns empty (for Excel cell merging)
-4. Within a test point, subsequent rows leave "测试点" empty too
-5. Do NOT output a header row (headers are fixed)
+**Additional instruction:** 对弹窗/模态框/抽屉/Tab 内的列表，同样需按 L1(布局/字段/分页/排序/空数据) 和 L2(搜索/筛选/组合查询/重置) 生成用例。
 
-### Naming Convention
+Generate test cases following each applicable guideline in L0, L1, L2. Skip items that don't apply. Write output to `{cache_dir}/partial_a.json`.
 
-ID format: `{module_abbr}-{sub_module_abbr}-{function_code}_{3-digit_number}`
+### Agent B — L3 (If has_data_entry)
 
-Function codes:
-- L = List
-- S = Search
-- XZ = Add (Xin Zeng)
-- BJ = Edit (Bian Ji)
-- SC = Delete (Shan Chu)
-- RK = Warehouse (Ru Ku)
-- SP = Approval (Shen Pi)
-- BF = Visit (Bai Fang)
-- FK = Attachment (Fu Jian)
-- DC = Export (Dao Chu)
+Layer: L3 (数据输入).
 
-### Content Style
+Focus: per-field validation based on type (use the expanded field type taxonomy in sop-layers.md, including textarea, radio, checkbox, search_select, multi_dropdown, date_range). Cross-field interaction patterns (condition_show, condition_required, cascade_fill, inline_create). Uniqueness checks, submit-and-verify. Follow 用例精简规则.
 
-1. Use Chinese punctuation only (，。：；！？), never English punctuation
-2. Wrap button names with 【】, e.g. 点击【保存】按钮
-3. Expected results use numbered list: `1.第一个预期结果` (no space between number and dot and text)
-4. For UI layout comparisons, write "参考原型系统"
-5. Operation steps: concise, one sentence per core action
-6. Enumerate code values with Chinese comma "、"
-7. Use `\n` for line breaks in expected results
+Write output to `{cache_dir}/partial_b.json`.
 
-### SOP 7-Layer Rules (Core)
+### Agent C — L4 (If has_data_modify)
 
-Generate test cases strictly in order from Layer 0 to Layer 6. Never skip a layer.
+Layer: L4 (数据修改).
 
-**【Layer 0: Common/Public Test Cases】**
-Trigger: every module must generate these
-Fixed template:
-- Data source: list data → internally added in the system
-- Menu permission: manager → menu visible, click to enter list page
-- Data permission: manager → sees associated data
-- UI requirements:
-  - No English punctuation in descriptions
-  - No typos in the system
-  - Mouse-over shows hand cursor on clickable elements
-  - Style check: font size, popup position/size, field spacing, line display
+Focus: edit recall display, editable vs read-only fields, status-based edit restrictions, post-modification verification. Do NOT duplicate UI button checks already covered by Agent A.
 
-**【Layer 1: List Page Test Cases】**
-Source: field spec - list page + business logic - filter/search + prototype
-Mapping rules:
-1. Layout check → overall style, arrangement, names, fields correct, ref prototype; sort rules; pagination
-2. Field check → list fields match prototype, enumerate all field names
-3. Button check → enumerate all buttons with 【】
-4. Button click response → each button gets independent test case: popup title, content, close behavior
-5. Tab switch check → tab switching normal, preserves data
-6. Button state check → button visibility/graying based on business logic
+Write output to `{cache_dir}/partial_c.json`.
 
-**【Layer 2: Search/Query Test Cases】**
-Source: business logic - filter/search
-Fixed template (for each search area):
-1. Query layout field check → layout, fields ref prototype, list keywords and filter conditions
-2. Empty condition query → click 【查询】 directly → returns all data
-3. Exact keyword query → input full name → returns matching data
-4. Fuzzy keyword query → input partial text → returns all containing that text
-5. Each filter condition solo query → one test case per condition
-6. Multi-condition combo query → pairwise combinations
-7. Full condition query → all conditions have values
-8. No-match query → no results found
-9. Clear query conditions → all cleared / reset to defaults
+### Agent D — L5+L6 (If has_business_logic or has_data_cleanup)
 
-**【Layer 3: Form Page Test Cases (Add/Edit/Detail)】**
-Source: field spec - add/edit form + business logic
+Layers: L5 (业务规则) + L6 (数据清理).
 
-3.1 Page-level checks:
-- Form layout check (field names, position, order, required markers, button names/position/color, ref prototype)
-- Non-editable field check (auto-populated fields cannot be edited)
-- Field and placeholder text check (field names correct, input hints match prototype)
+Focus L5: approval flows (submit/approve/reject/withdraw), state transitions, data linkage, calculation rules, draft/temp state (if mentioned in requirement). Focus L6: delete permissions, confirmation dialogs, status restrictions, post-delete verification, cascade effects. Do NOT duplicate UI button checks already covered by Agent A. Skip layers that don't apply.
 
-3.2 Per-field check:
-Match each field's type to the Field Validation Rule Library below.
+Write output to `{cache_dir}/partial_d.json`.
 
-3.3 Required field validation:
-- Required marker exists
-- Empty submission blocked → correct error message
+## Step 4: Merge Results (Task sub-agent)
 
-3.4 Default value check:
-- List and verify each "default xxx" from field spec
-- e.g. "对接人 defaults to current login user", "运营主体所在地 defaults to 境内"
+After all sub-agents complete, dispatch a merge Task with:
+- **Prompt:** Read partial JSON files from cache_dir, read json-schema.md for the full output format
+- **subagent_type:** `general-purpose`
 
-3.5 Conditional linkage check:
-- Generate linkage test cases from "when xxx, show/hide" in field spec
-- Each linkage group must cover 3 scenarios:
-  a) Show/hide verification: trigger condition → field appears
-  b) Condition switch: switch from condition A to B → field refreshes, old value cleared
-  c) Post-trigger required validation: if shown field is required, test empty submission
+The merge agent must:
+1. **Read** all partial JSON files: `partial_a.json`, `partial_b.json` (if exists), `partial_c.json` (if exists), `partial_d.json` (if exists)
+2. **Concatenate** into a single test_cases array (order: A → B → C → D)
+3. **Deduplicate** overlapping test cases (same test_point + case_name)
+4. **Group into sections** by `sub_module` — each unique sub_module becomes a section
+5. **Renumber** all IDs sequentially: `{module_code}_001`, `{module_code}_002`, ...
+6. **Build the complete JSON** with meta + style (copy style block exactly from json-schema.md) + sections + merge_rules
+7. **Write** to `{output_dir}/{module_code}_testcases.json`
 
-**【Layer 4: Save/Submit Test Cases】**
-Fixed template:
-1. Save function → shows success message
-2. Required field validation → required markers present; input hints correct, match prototype
-3. Modification correctness → partial field modify, only that field changes; all fields modify, saves correctly; delete non-required data, saves as empty
-4. Code value switch → after switching, save displays correctly
-5. Cancel/cancel edit → data not saved; re-edit shows original data
-6. Button duplicate-click prevention → rapid clicks don't create duplicate records
-7. Change log → change log shows modified field info
+## Step 5: Generate Excel
 
-Attachment-related (if form has attachment fields):
-1. Upload validation → supported formats, size limit, view method (download/preview), batch upload
-2. Attachment filename length check
-3. Save upload validity → uploaded successfully, sorted by creation time desc
-4. Cancel upload validity → clicking cancel returns to previous page
+Run the conversion script (orchestrator runs this directly, no Task needed):
 
-**【Layer 5: Business Logic Test Cases】**
-Source: business logic rules
-Mapping: each business rule → 1~N test cases
-
-Rule types and strategies:
-- Uniqueness check → duplicate input → error message verification
-- State flow → one test case per state transition path
-- Approval flow → submit→approve→verify; submit→reject→verify
-- Conditional button display → button visibility/graying per state
-- Data sync → post-warehouse data sync check in other modules
-- Draft save/recall → save draft → close → reopen → data recalled
-- Export → export data based on current filter conditions
-
-**【Layer 6: Delete Test Cases】**
-Fixed template:
-1. Delete confirmation prompt → business validation (e.g. associated records can't be deleted); confirmation message (e.g. "是否删除该记录？"); success prompt
-2. Confirm delete → deleted successfully, list refreshes
-3. Cancel delete → not deleted, data preserved
-4. Business restriction → e.g. warehoused items can't be deleted, button grayed
-5. Associated data check → associated records can't be deleted
-
-### Field Validation Rule Library
-
-Match field type → apply corresponding validation test cases. Always mention the field name in the test case.
-
-**Text box:**
-- Half-row: 50 char limit, excess can't be input
-- Full-row: 100 char limit, excess can't be input
-- Text area: 2000 char limit, shows "字数提示"; supports indent, line break, space; shows entered/2000 at bottom-left
-- Special character check
-- Excess characters can't be input
-
-**Numeric input:**
-- Only numbers, characters can't be input
-- Precision: 6 decimals; total 20 digits (including decimal point), 13 integer + . + 6 decimal
-- Unit label (万元)
-- Thousand separator display
-- Whether negative numbers are allowed (business-dependent)
-
-**Dropdown single-select:**
-- Fixed code values correct, can only select one
-- Non-fixed code values, data source correct
-- Default shows all
-- Order matches requirement
-- Supports keyword search input (if applicable)
-
-**Dropdown multi-select:**
-- Same as single-select but can select multiple
-
-**Radio button:**
-- Code values correct, can only select one
-
-**Checkbox:**
-- Code values correct, can select multiple
-
-**Date picker:**
-- Precision: year-month-day (or year-month-day hour-minute per requirement)
-- Date range: end date >= start date
-
-**File upload:**
-- Supported format check
-- Size limit check
-- View method: download / online preview
-- Batch upload support
-- Filename length check
-
-**System user selector:**
-- Default shows current login user (if specified)
-- Editable
-- Supports search selection
-
-### Conditional Logic Rules
-
-When requirement has conditional show/hide logic, must cover:
-1. Show/hide verification: trigger → field appears; cancel → field hides
-2. Condition switch: switch A→B → field refreshes, old value cleared
-3. Post-trigger required validation: shown required field empty → error message
-
-### Quality Constraints
-
-1. Every business rule must have corresponding test cases (traceable)
-2. Every required field must have validation test cases
-3. Conditional linkages must have forward + reverse test cases
-4. Expected results must be specific (never just "correct", describe concrete behavior)
-5. Field validation test cases must include the field name
-6. Code value enumeration must be complete (if requirement lists 3 values, test cases must list all 3)
-
----
-
-## Few-shot Examples
-
-```text
-【Example 1: List】
-列表（XMGL-TQGL-L）
-XMGL-TQGL-L_001|产业投资|项目管理|列表|列表|列表界面布局检查|查看项目管理列表|1.页面整体样式、排版、名称、字段显示正确，参考原型系统\n2.顺序：按新增时间，倒叙排列\n3.翻页正常
-XMGL-TQGL-L_002|||||列表界面字段检查|查看项目管理列表|列表字段与原型一致，包括：企业简称、项目状态、出资主体、拟投资金额、是否SPV、首次出资日期、累计出资金额
-XMGL-TQGL-L_003|||||列表界面按钮检查|查看项目管理列表|【项目投前管理】【项目投后管理】【搜索】【清空】【收起/展开】【投前管理】【暂缓】【终止】
-
-【Example 2: Search】
-查询（XMGL-TQGL-S）
-XMGL-TQGL-S_001|产业投资|项目管理||查询|查询界面布局字段检查|查看查询区域|1.布局、字段参考原型\n2.关键字：项目名称\n3.筛选：出资主体、项目状态
-XMGL-TQGL-S_002|||||空条件查询|直接点击【查询】按钮|查出全部数据
-XMGL-TQGL-S_003|||||关键字精确查询|关键字输入项目名称全称，点击【查询】按钮|查出对应的项目
-
-【Example 3: Field Validation】
-XMGL-TQGL-XMGK_022||||编辑|合法性校验-金额|本轮融资金额(万元)、投前估值(万元)|需要关注是否可以输入负数
-XMGL-TQGL-XMGK_023||||||6位小数；总数20位（含小数点）\n13位正数+【.】+6位小数
-XMGL-TQGL-XMGK_024||||||单位：万元
-XMGL-TQGL-XMGK_025||||||千分位符
-XMGL-TQGL-XMGK_026||||||只能输入数字，字符不可输入
-
-【Example 4: Save】
-XMGL-TQGL-XMGK_048||||保存|保存功能校验||1.展示提示信息
-XMGL-TQGL-XMGK_049||||||2.保存成功
-XMGL-TQGL-XMGK_050||||保存|必填项校验||1.必填项校验成功，有必填标识符
-XMGL-TQGL-XMGK_051||||||2.输入框提示正确，同原型
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/convert_to_xlsx.py {json_path} {output_xlsx_path}
 ```
 
-Note: within the same test point, subsequent sub-items (e.g. _049, _051) leave "测试点" and "用例名称" empty, only "预期结果" has the numbered continuation.
+- `{json_path}` = JSON from Step 4
+- `{output_xlsx_path}` = `{output_dir}/{module_code}_testcases.xlsx`
+- If `openpyxl` is missing: `pip3 install openpyxl`
+- For Excel format details, see `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/excel-template-spec.md`
+
+## Step 6: Cleanup and Report
+
+```bash
+rm -rf {cache_dir}
+```
+
+Report:
+```
+测试用例生成完成!
+- JSON: {json_path}
+- Excel: {output_xlsx_path}
+- 共生成 {N} 条测试用例，覆盖 {M} 个子模块
+```
+
+Open the file: `open {output_xlsx_path}`

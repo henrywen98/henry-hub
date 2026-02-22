@@ -1,5 +1,5 @@
 {
   "name": "test-case-generator",
-  "version": "1.0.0",
-  "description": "From requirement docs to structured test cases (pipe-delimited text + formatted Excel). Based on SOP 7-layer methodology for B2B enterprise systems."
+  "version": "2.0.0",
+  "description": "Generate structured test cases from requirement documents using 7-layer SOP framework. Parallel sub-agents + JSON intermediate + formatted Excel output."
 }
