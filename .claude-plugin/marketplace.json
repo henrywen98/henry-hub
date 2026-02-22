@@ -1,6 +1,10 @@
 {
   "name": "henry-hub",
   "description": "Henry's personal plugin marketplace for Claude Code",
+  "owner": {
+    "name": "Henry",
+    "email": "henrywen030@icloud.com"
+  },
   "plugins": [
     { "name": "doc-coauthoring", "description": "文档协作工作流", "source": "./plugins/doc-coauthoring" },
     { "name": "docx", "description": "Word 文档处理", "source": "./plugins/docx" },
