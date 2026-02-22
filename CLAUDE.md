@@ -1,5 +1,7 @@
 # Henry Hub Marketplace
 
+> Version: v0.1.5 (2026-02-22)
+
 Personal Claude Code plugin marketplace (`henrywen98/henry-hub`).
 
 ## Project Structure
@@ -73,6 +75,15 @@ Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name
 - `superpowers` — forked from obra/superpowers v4.3.1, full plugin (skills, agents, commands, hooks)
 
 When updating forks, preserve the original `author`, `license`, and attribution.
+
+## Versioning
+
+使用 semver (`vMAJOR.MINOR.PATCH`)，每次 push 后更新 CLAUDE.md 顶部的 Version 行：
+- **PATCH**: bug fix, docs update
+- **MINOR**: 新增插件、新功能
+- **MAJOR**: 破坏性变更（marketplace 结构调整等）
+
+格式：`> Version: vX.Y.Z (YYYY-MM-DD)`
 
 ## Conventions
 
