@@ -1,0 +1,5 @@
+{
+  "name": "bmad-qa-agent",
+  "version": "1.0.0",
+  "description": "QA 自动化测试生成 Agent（基于 BMAD Method Quinn）。自动检测测试框架，生成 API 和 E2E 测试。"
+}
