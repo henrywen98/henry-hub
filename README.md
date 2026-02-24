@@ -46,6 +46,12 @@ Henry 的个人 Claude Code 插件市场，统一管理自建 skills 和常用�
 | test-case-generator | 从需求文档生成结构化测试用例 + Excel | `/plugins install test-case-generator@henry-hub` |
 | comprehensive-test-generation | 全面测试生成策略（E2E/API/Unit） | `/plugins install comprehensive-test-generation@henry-hub` |
 
+### 内容创作
+
+| 插件 | 说明 | 安装命令 |
+|------|------|----------|
+| xhs-image-gen | 文案转小红书图文卡片，9 种风格 × 6 种布局 | `/plugins install xhs-image-gen@henry-hub` |
+
 ### 开发工具
 
 | 插件 | 说明 | 安装命令 |
