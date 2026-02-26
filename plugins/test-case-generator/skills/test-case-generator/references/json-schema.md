@@ -141,6 +141,7 @@ Sub-agents output ONLY the `test_cases` array (no meta, style, or sections wrapp
 [
   {
     "id": "TEMP_001",
+    "doc_section": "sec_01",
     "module": "资源池",
     "sub_module": "列表页",
     "test_point": "页面入口检查",
@@ -156,7 +157,9 @@ Sub-agents output ONLY the `test_cases` array (no meta, style, or sections wrapp
 
 The main agent:
 1. Collects arrays from all sub-agents
-2. Concatenates in order (A → B → C → D)
-3. Renumbers IDs sequentially with the correct MODULE-CODE prefix
-4. Groups into sections by sub_module
-5. Wraps in the full JSON structure with meta + style
+2. Groups by `doc_section`, ordered by `doc_order` from analysis.json
+3. Within each group, maintains agent order (A → B → C → D)
+4. Each `doc_section` group becomes one section, title from doc_sections[].title
+5. Renumbers IDs sequentially with the correct MODULE-CODE prefix
+6. Strips `doc_section` field from final output (not needed in Excel)
+7. Wraps in the full JSON structure with meta + style

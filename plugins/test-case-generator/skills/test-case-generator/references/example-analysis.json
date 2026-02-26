@@ -61,5 +61,35 @@
   ],
   "business_rules_summary": "入库审批流程: 提交→审批→入库; 入库后部分字段不可编辑; 未入库状态可编辑/删除",
   "filter_fields": ["企业名称/项目简称", "企业类型", "是否已入库"],
-  "list_fields": ["序号", "企业全称", "企业简称", "企业类型", "是否入库", "操作"]
+  "list_fields": ["序号", "企业全称", "企业简称", "企业类型", "是否入库", "操作"],
+  "doc_sections": [
+    {
+      "id": "sec_01",
+      "title": "资源池列表",
+      "heading_level": 2,
+      "page_type": "list",
+      "doc_order": 1
+    },
+    {
+      "id": "sec_02",
+      "title": "新增资源池",
+      "heading_level": 2,
+      "page_type": "form",
+      "doc_order": 2
+    },
+    {
+      "id": "sec_03",
+      "title": "编辑资源池",
+      "heading_level": 2,
+      "page_type": "form",
+      "doc_order": 3
+    },
+    {
+      "id": "sec_04",
+      "title": "入库审批",
+      "heading_level": 2,
+      "page_type": "approval",
+      "doc_order": 4
+    }
+  ]
 }

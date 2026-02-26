@@ -74,7 +74,7 @@
   },
   "sections": [
     {
-      "title": "基金日常管理（JJRCGL-GSBG）",
+      "title": "资源池列表（JJRCGL-GSBG）",
       "test_cases": [
         {
           "id": "JJRCGL-GSBG_001",
@@ -135,7 +135,12 @@
           "expected": "1.显示全部状态企业\n2.仅显示未入库企业\n3.仅显示已入库企业\n4.页面刷新后保持筛选状态\n5.列表行内状态与筛选条件匹配",
           "note": "",
           "priority": ""
-        },
+        }
+      ]
+    },
+    {
+      "title": "新增资源池（JJRCGL-GSBG）",
+      "test_cases": [
         {
           "id": "JJRCGL-GSBG_006",
           "module": "资源池",
@@ -147,7 +152,12 @@
           "expected": "1.登记状态选中\"已注册\"\n2.企业全称变为搜索选择模式\n3.下拉展示匹配结果, 选择后企业全称自动填入\n4.关联字段根据工商信息自动填充且不可编辑\n5.登记状态切换为\"未注册\"\n6.企业全称变为普通文本输入框\n7.可自由输入企业全称",
           "note": "",
           "priority": ""
-        },
+        }
+      ]
+    },
+    {
+      "title": "入库审批（JJRCGL-GSBG）",
+      "test_cases": [
         {
           "id": "JJRCGL-GSBG_007",
           "module": "资源池",

@@ -28,7 +28,16 @@ Phase 2 outputs `analysis.json` to the cache directory. All subsequent phases re
   ],
   "business_rules_summary": "入库审批流程: 提交→审批→入库; 入库后部分字段不可编辑",
   "filter_fields": ["企业名称/项目简称", "企业类型", "是否已入库"],
-  "list_fields": ["序号", "企业全称", "企业简称", "企业类型", "是否入库", "操作"]
+  "list_fields": ["序号", "企业全称", "企业简称", "企业类型", "是否入库", "操作"],
+  "doc_sections": [
+    {
+      "id": "sec_01",
+      "title": "资源池列表",
+      "heading_level": 2,
+      "page_type": "list",
+      "doc_order": 1
+    }
+  ]
 }
 ```
 
@@ -51,3 +60,19 @@ Optional array. Valid values:
 - `condition_required` — this field's required status depends on another field
 - `cascade_fill` — this field is auto-filled when a parent entity is selected
 - `inline_create` — this field has an "add new" button opening a sub-form
+
+### doc_sections
+
+按需求文档标题顺序提取的章节列表，用于控制最终输出的 section 排列顺序。
+
+- `id`: 唯一标识，格式 `sec_NN`
+- `title`: 章节标题（取自需求文档原文）
+- `heading_level`: 标题层级（1/2/3...）
+- `page_type`: 页面类型。可选值：`list` | `form` | `detail` | `approval` | `other`
+- `doc_order`: 在需求文档中的出现顺序（从 1 开始）
+
+**粒度判断规则：**
+- 取"页面级"标题作为 section（列表页、新增页、编辑页、审批页等）
+- 文档只有两级标题时，取最细一级
+- 三级以上标题时，取对应到独立页面/弹窗的层级
+- 同一页面的不同 Tab 不拆分，归入同一 section

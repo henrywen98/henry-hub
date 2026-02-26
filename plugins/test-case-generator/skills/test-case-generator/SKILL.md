@@ -45,6 +45,7 @@ All Task sub-agents share these rules:
 - precondition: include current page/dialog location, e.g., "用户已登录并打开新增弹窗"
 - Follow the Writing Guidelines and 用例精简规则 in sop-layers.md
 - **去重原则:** UI 呈现（按钮显示/隐藏/置灰/文案）由 Agent A 覆盖。Agent C/D 在步骤中可引用按钮状态作为前提，但不生成重复的 UI 检查用例。
+- **文档章节标签:** 每条用例必须包含 `doc_section` 字段，值为 analysis.json 中 `doc_sections[].id`。根据该用例测试的页面/功能，匹配最相关的 doc_section。如果一条用例跨多个页面，选择其主要操作所在的页面。
 
 ## Step 1: Read Requirement Document
 
@@ -78,7 +79,8 @@ The agent must:
 3. Determine dispatch flags (has_ui, has_data_entry, has_data_modify, has_business_logic, has_data_cleanup)
 4. Summarize business rules
 5. List filter_fields and list_fields
-6. Write the result as JSON to `{cache_dir}/analysis.json`
+6. Extract `doc_sections` — scan document headings to build an ordered list of page-level sections. Apply granularity rules from analysis-schema.md. Each section gets a sequential `doc_order`.
+7. Write the result as JSON to `{cache_dir}/analysis.json`
 
 After the Task completes, the orchestrator:
 1. Reads `{cache_dir}/analysis.json` (~2KB)
@@ -104,6 +106,7 @@ Each agent's Task prompt includes:
 - module_name and module_code from analysis.json
 - The field_table from analysis.json (for Agent B/C)
 - The business_rules_summary from analysis.json (for Agent D)
+- The doc_sections from analysis.json (for all agents — used for `doc_section` tagging)
 - Reference file paths: `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/sop-layers.md`, `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/json-schema.md`, `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/example-output.json`
 - Output path: `{cache_dir}/partial_{agent_letter}.json`
 - The Global Rules above
@@ -145,17 +148,20 @@ Write output to `{cache_dir}/partial_d.json`.
 ## Step 4: Merge Results (Task sub-agent)
 
 After all sub-agents complete, dispatch a merge Task with:
-- **Prompt:** Read partial JSON files from cache_dir, read json-schema.md for the full output format
+- **Prompt:** Read partial JSON files and analysis.json from cache_dir, read json-schema.md for the full output format. Use doc_sections from analysis.json to determine section ordering.
 - **subagent_type:** `general-purpose`
 
 The merge agent must:
 1. **Read** all partial JSON files: `partial_a.json`, `partial_b.json` (if exists), `partial_c.json` (if exists), `partial_d.json` (if exists)
-2. **Concatenate** into a single test_cases array (order: A → B → C → D)
-3. **Deduplicate** overlapping test cases (same test_point + case_name)
-4. **Group into sections** by `sub_module` — each unique sub_module becomes a section
-5. **Renumber** all IDs sequentially: `{module_code}_001`, `{module_code}_002`, ...
-6. **Build the complete JSON** with meta + style (copy style block exactly from json-schema.md) + sections + merge_rules
-7. **Write** to `{output_dir}/{module_code}_testcases.json`
+2. **Read** `{cache_dir}/analysis.json` to get the `doc_sections` array
+3. **Group by doc_section** — for each `doc_sections` entry (ordered by `doc_order`), collect all test cases whose `doc_section` matches. Within each group, maintain agent order (A → B → C → D)
+4. **Handle unmatched** — test cases without a valid `doc_section` go into a final "其他" section
+5. **Deduplicate** overlapping test cases within each group (same test_point + case_name)
+6. **Build sections** — each `doc_section` group becomes one section. Title format: "{doc_sections[].title}（{module_code}）"
+7. **Renumber** all IDs sequentially across all sections: `{module_code}_001`, `{module_code}_002`, ...
+8. **Strip** the `doc_section` field from every test case (not needed in final output)
+9. **Build the complete JSON** with meta + style (copy style block exactly from json-schema.md) + sections + merge_rules
+10. **Write** to `{output_dir}/{module_code}_testcases.json`
 
 ## Step 5: Generate Excel
 
