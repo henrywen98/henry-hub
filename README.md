@@ -39,6 +39,7 @@ Henry 的个人 Claude Code 插件市场，统一管理自建 skills 和常用�
 | ai-pm-feedback-collector | 客户反馈整理为结构化需求文档 | `/plugins install ai-pm-feedback-collector@henry-hub` |
 | github-issue-generator | 信息整理为标准 GitHub Issue 格式 | `/plugins install github-issue-generator@henry-hub` |
 | bmad-prd-agent | 产品经理 Agent (John, 基于 BMAD) - PRD 全生命周期 | `/plugins install bmad-prd-agent@henry-hub` |
+| prd-review-board | PRD 多专家红队评审工作流 | `/plugins install prd-review-board@henry-hub` |
 
 ### 测试
 
@@ -53,6 +54,7 @@ Henry 的个人 Claude Code 插件市场，统一管理自建 skills 和常用�
 | 插件 | 说明 | 安装命令 |
 |------|------|----------|
 | xhs-image-gen | 文案转小红书图文卡片，9 种风格 × 6 种布局 | `/plugins install xhs-image-gen@henry-hub` |
+| prototype | HTML 原型生成器（杭州产投系统规范） | `/plugins install prototype@henry-hub` |
 
 ### 开发工具
 
