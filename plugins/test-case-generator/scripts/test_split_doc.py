@@ -2,7 +2,6 @@
 """Tests for split_doc.py"""
 import json
 import os
-import tempfile
 import pytest
 from split_doc import split_document
 
