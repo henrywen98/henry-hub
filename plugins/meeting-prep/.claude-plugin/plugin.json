@@ -1,0 +1,5 @@
+{
+  "name": "meeting-prep",
+  "version": "1.0.0",
+  "description": "会议准备工具，通过 6 个结构化问题生成完整会前文档，保存为 Obsidian 笔记"
+}

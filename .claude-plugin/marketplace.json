@@ -26,6 +26,6 @@
     { "name": "prototype", "description": "HTML 原型生成器", "source": "./plugins/prototype" },
     { "name": "xhs-image-gen", "description": "文案转小红书图文卡片", "source": "./plugins/xhs-image-gen" },
     { "name": "code-simplifier", "description": "代码简化与优化", "source": "./plugins/code-simplifier" },
-    { "name": "superpowers", "description": "核心技能库：TDD、调试、协作", "source": "./plugins/superpowers" }
+    { "name": "meeting-prep", "description": "会议准备工具，6 问生成会前文档", "source": "./plugins/meeting-prep" }
   ]
 }
