@@ -68,12 +68,11 @@ Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name
 | Requirements & Workflow | doc-coauthoring, prd-workflow, gen-requirement-doc, ai-pm-feedback-collector, github-issue-generator, bmad-prd-agent, prd-review-board |
 | Testing | test-case-generator, comprehensive-test-generation, bmad-qa-agent |
 | Content Creation | xhs-image-gen, prototype |
-| Dev Tools | batch-commit, ssot-prompt-engineer, code-simplifier (fork), superpowers (fork) |
+| Dev Tools | batch-commit, ssot-prompt-engineer, code-simplifier (fork) |
 
 ## Forked Plugins
 
 - `code-simplifier` — forked from Anthropic official, has `agents/` only
-- `superpowers` — forked from obra/superpowers v4.3.1, full plugin (skills, agents, commands, hooks)
 - `bmad-qa-agent` — extracted from BMAD-METHOD v6.0.1 (Quinn QA Engineer)
 - `bmad-prd-agent` — extracted from BMAD-METHOD v6.0.1 (John Product Manager)
 
