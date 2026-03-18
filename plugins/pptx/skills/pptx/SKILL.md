@@ -1,6 +1,6 @@
 ---
 name: pptx
-description: "Presentation creation, editing, and analysis. When Claude needs to work with presentations (.pptx files) for: (1) Creating new presentations, (2) Modifying or editing content, (3) Working with layouts, (4) Adding comments or speaker notes, or any other presentation tasks"
+description: "Presentation creation, editing, and analysis with Simplified Chinese (简体中文) support. When Claude needs to work with presentations (.pptx files) for: (1) Creating new presentations, (2) Modifying or editing content, (3) Working with layouts, (4) Adding comments or speaker notes, (5) Creating Chinese-language presentations (中文演示文稿), or any other presentation tasks. Also use when user mentions 制作PPT, 编辑PPT, 创建演示文稿, 修改幻灯片, or similar Chinese phrases about presentations."
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
@@ -59,6 +59,7 @@ When creating a new PowerPoint presentation from scratch, use the **html2pptx** 
 **Requirements**:
 - ✅ State your content-informed design approach BEFORE writing code
 - ✅ Use web-safe fonts only: Arial, Helvetica, Times New Roman, Georgia, Courier New, Verdana, Tahoma, Trebuchet MS, Impact
+- ✅ For Chinese (中文) content, use CJK-compatible fonts: Microsoft YaHei (微软雅黑), SimSun (宋体), SimHei (黑体), KaiTi (楷体), FangSong (仿宋). Default to **Microsoft YaHei** for modern, clean Chinese text.
 - ✅ Create clear visual hierarchy through size, weight, and color
 - ✅ Ensure readability: strong contrast, appropriately sized text, clean alignment
 - ✅ Be consistent: repeat patterns, spacing, and visual language across slides
@@ -463,6 +464,49 @@ Example for specific range:
 ```bash
 pdftoppm -jpeg -r 150 -f 2 -l 5 template.pdf slide  # Converts only pages 2-5
 ```
+
+## Simplified Chinese (简体中文) Support
+
+When creating or editing presentations with Chinese content, follow these guidelines to ensure proper rendering:
+
+### Font Selection
+- **Default Chinese font**: Microsoft YaHei (微软雅黑) — modern sans-serif, good readability on screen and in print
+- **Formal/print contexts**: SimSun (宋体) — traditional serif font for formal documents
+- **Headings/emphasis**: SimHei (黑体) — bold sans-serif, good for titles and headers
+- **Handwriting style**: KaiTi (楷体) — for decorative or calligraphic feel
+- **Official document style**: FangSong (仿宋) — for government/official document aesthetics
+
+### html2pptx Workflow (Creating from Scratch)
+When creating Chinese presentations via HTML:
+- Set `font-family` with Chinese font first, then Latin fallback: `font-family: 'Microsoft YaHei', Arial, sans-serif;`
+- Chinese text typically needs slightly larger font sizes than English for the same readability — increase body text by ~2pt (e.g., 14pt instead of 12pt)
+- Line height for Chinese text should be 1.5–1.8x (Chinese characters are taller and denser than Latin letters)
+- Avoid extremely long lines of Chinese text — keep to ~20-25 characters per line for readability
+
+### OOXML Workflow (Editing Existing Files)
+When editing Chinese content in raw XML:
+- Set language attribute: `lang="zh-CN"` on `<a:rPr>` elements
+- Specify East Asian font using `<a:ea>` element inside `<a:rPr>`:
+  ```xml
+  <a:rPr lang="zh-CN" dirty="0">
+    <a:ea typeface="Microsoft YaHei"/>
+  </a:rPr>
+  ```
+- For mixed Chinese-English text, set both Latin and East Asian fonts:
+  ```xml
+  <a:rPr lang="zh-CN" dirty="0">
+    <a:latin typeface="Arial"/>
+    <a:ea typeface="Microsoft YaHei"/>
+  </a:rPr>
+  ```
+- When replacing text in templates, preserve existing `<a:ea>` font specifications
+
+### Character Encoding & Punctuation
+- All XML files use UTF-8 encoding (OOXML default)
+- **Chinese characters and punctuation do NOT need XML entity escaping** — write them directly in `<a:t>` elements. Only the 5 XML special characters need escaping: `&` `<` `>` `"` `'`
+- The OOXML rule about escaping `"` → `&#8220;` applies only to ASCII-context curly quotes. Chinese text in UTF-8 XML needs no such conversion — do not waste time escaping Chinese punctuation
+- Use Chinese punctuation（，。、；：""''！？）in Chinese text instead of English punctuation
+- When generating Chinese content, output text directly — avoid any per-character inspection or transformation loop that would slow down processing
 
 ## Code Style Guidelines
 **IMPORTANT**: When generating code for PPTX operations:

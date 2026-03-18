@@ -45,7 +45,9 @@ Every HTML slide must include proper body dimensions:
 
 **ONLY use web-safe fonts that are universally available:**
 - ✅ Web-safe fonts: `Arial`, `Helvetica`, `Times New Roman`, `Georgia`, `Courier New`, `Verdana`, `Tahoma`, `Trebuchet MS`, `Impact`, `Comic Sans MS`
+- ✅ Chinese (CJK) fonts: `Microsoft YaHei` (微软雅黑), `SimSun` (宋体), `SimHei` (黑体), `KaiTi` (楷体), `FangSong` (仿宋)
 - ❌ Wrong: `'Segoe UI'`, `'SF Pro'`, `'Roboto'`, custom fonts - **Might cause rendering issues**
+- For Chinese content, always specify Chinese font first with Latin fallback: `font-family: 'Microsoft YaHei', Arial, sans-serif;`
 
 ### Styling
 

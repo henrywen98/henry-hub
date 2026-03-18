@@ -12,6 +12,19 @@
 - **Relationships**: Update `ppt/slides/_rels/slideN.xml.rels` for each slide's resources
 - **Dirty attribute**: Add `dirty="0"` to `<a:rPr>` and `<a:endParaRPr>` elements to indicate clean state
 
+### Chinese (简体中文) Text in OOXML
+- Set `lang="zh-CN"` on `<a:rPr>` for Chinese text runs
+- Specify East Asian font with `<a:ea typeface="Microsoft YaHei"/>` inside `<a:rPr>`
+- For mixed Chinese-English text, set both `<a:latin>` and `<a:ea>`:
+  ```xml
+  <a:rPr lang="zh-CN" dirty="0">
+    <a:latin typeface="Arial"/>
+    <a:ea typeface="Microsoft YaHei"/>
+  </a:rPr>
+  ```
+- **Chinese characters and punctuation are valid UTF-8 in XML — write them directly in `<a:t>` elements, NO escaping or entity conversion needed.** Only the 5 standard XML special characters (`&` `<` `>` `"` `'`) require escaping. Do not iterate over Chinese text to escape individual characters — this wastes significant processing time for zero benefit.
+- Use Chinese punctuation（，。、；：""''！？）in Chinese text, not English punctuation
+
 ## Presentation Structure
 
 ### Basic Slide Structure
