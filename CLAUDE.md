@@ -65,20 +65,10 @@ Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name
 | Category | Plugins |
 |----------|---------|
 | Document Processing | docx, pdf, pptx, xlsx |
-| Requirements & Workflow | doc-coauthoring, prd-workflow, gen-requirement-doc, ai-pm-feedback-collector, github-issue-generator, bmad-prd-agent, prd-review-board |
-| Testing | test-case-generator, comprehensive-test-generation, bmad-qa-agent |
-| Content Creation | xhs-image-gen, prototype |
-| Dev Tools | batch-commit, ssot-prompt-engineer, code-simplifier (fork) |
-
-## Forked Plugins
-
-- `code-simplifier` — forked from Anthropic official, has `agents/` only
-- `bmad-qa-agent` — extracted from BMAD-METHOD v6.0.1 (Quinn QA Engineer)
-- `bmad-prd-agent` — extracted from BMAD-METHOD v6.0.1 (John Product Manager)
-
-When updating forks, preserve the original `author`, `license`, and attribution.
-
-When updating BMAD-extracted plugins, preserve attribution to bmad-code-org and MIT License.
+| Requirements & Workflow | doc-coauthoring, ai-pm-feedback-collector, github-issue-generator, purvar-prd |
+| Testing | test-case-generator, comprehensive-test-generation |
+| Efficiency | meeting-prep, weekly-report |
+| Dev Tools | ssot-prompt-engineer |
 
 ## Versioning
 
