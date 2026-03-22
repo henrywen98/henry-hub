@@ -1,0 +1,5 @@
+{
+  "name": "weekly-report",
+  "version": "1.0.0",
+  "description": "周报生成工具。从 Claude Code 聊天记录和项目活动中自动提取工作内容，生成面向领导的会议周报，支持自定义时间范围。"
+}

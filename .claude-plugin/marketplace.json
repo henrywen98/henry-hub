@@ -26,6 +26,7 @@
     { "name": "prototype", "description": "HTML 原型生成器", "source": "./plugins/prototype" },
     { "name": "xhs-image-gen", "description": "文案转小红书图文卡片", "source": "./plugins/xhs-image-gen" },
     { "name": "code-simplifier", "description": "代码简化与优化", "source": "./plugins/code-simplifier" },
-    { "name": "meeting-prep", "description": "会议准备工具，6 问生成会前文档", "source": "./plugins/meeting-prep" }
+    { "name": "meeting-prep", "description": "会议准备工具，6 问生成会前文档", "source": "./plugins/meeting-prep" },
+    { "name": "weekly-report", "description": "周报生成工具，从聊天记录自动生成会议周报", "source": "./plugins/weekly-report" }
   ]
 }
