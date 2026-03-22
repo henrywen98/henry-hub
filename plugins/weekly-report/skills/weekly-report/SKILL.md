@@ -1,6 +1,6 @@
 ---
 name: weekly-report
-description: 周报生成工具。从 Claude Code 的聊天记录、会话元数据和项目活动中自动提取本周工作内容，分类汇总后生成面向领导的会议周报。当用户提到"周报"、"生成周报"、"本周总结"、"工作汇报"、"weekly report"、"上周做了什么"、"这周干了什么"时触发。支持自定义时间范围（默认当前自然周，周一至周日）。
+description: 周报生成工具。从 Claude Code 聊天记录自动提取工作内容，生成面向领导的会议周报。支持自定义时间范围（默认当前自然周）。
 ---
 
 # 周报生成（Weekly Report）
@@ -10,7 +10,7 @@ description: 周报生成工具。从 Claude Code 的聊天记录、会话元数
 ## 整体流程
 
 ```
-参数解析 → 数据采集(并行) → 分析分类 → 用户确认 → 生成报告 → 用户审阅
+参数解析 → 数据采集(并行) → 分析分类 → 用户确认 → 生成报告 → 自动Review → 用户审阅
 ```
 
 ---
@@ -41,7 +41,14 @@ print(f'today_ts: {int((today + timedelta(days=1)).strftime(\"%s\")) * 1000}')
 "
 ```
 
-得到 `start_ts` 和 `end_ts`（毫秒时间戳），后续筛选数据用。
+得到以下变量，后续 Phase 均会使用：
+
+| 变量名 | 格式 | 示例 | 用途 |
+|--------|------|------|------|
+| `START_TS` | 毫秒时间戳 | `1773590400000` | Agent A 按时间戳筛选 history.jsonl |
+| `END_TS` | 毫秒时间戳 | `1774195200000` | 同上 |
+| `START_DATE` | YYYY-MM-DD | `2026-03-16` | Agent B/C 按日期筛选 |
+| `END_DATE` | YYYY-MM-DD | `2026-03-22` | 同上 |
 
 ---
 
@@ -84,45 +91,7 @@ Wave 3: 交叉校验（1 Agent）
 3. 按天统计的命令数分布
 4. 按 `sessionId` 统计的独立会话数
 
-```bash
-python3 << 'PYEOF'
-import json, os
-from datetime import datetime, date, timedelta
-from collections import defaultdict
-
-START_TS = $START_TS   # 替换为 Phase 1 计算的值
-END_TS = $END_TS
-
-projects = defaultdict(lambda: {"count": 0, "samples": [], "sessions": set(), "days": set()})
-
-with open(os.path.expanduser("~/.claude/history.jsonl")) as f:
-    for line in f:
-        try:
-            r = json.loads(line.strip())
-            ts = r.get("timestamp", 0)
-            if START_TS <= ts < END_TS:
-                p = r.get("project", "unknown")
-                projects[p]["count"] += 1
-                projects[p]["sessions"].add(r.get("sessionId", ""))
-                projects[p]["days"].add(datetime.fromtimestamp(ts / 1000).strftime("%m/%d"))
-                if len(projects[p]["samples"]) < 20:
-                    projects[p]["samples"].append(r.get("display", "")[:150])
-        except:
-            pass
-
-# 输出完整统计
-total_cmds = sum(p["count"] for p in projects.values())
-total_sessions = len(set().union(*(p["sessions"] for p in projects.values())))
-print(f"=== 总计: {total_cmds} 条命令, {total_sessions} 个会话, {len(projects)} 个项目 ===\n")
-
-for path, data in sorted(projects.items(), key=lambda x: -x[1]["count"]):
-    days_str = ", ".join(sorted(data["days"]))
-    print(f"\n## {path}")
-    print(f"   命令数: {data['count']} | 会话数: {len(data['sessions'])} | 活跃日: {days_str}")
-    for i, s in enumerate(data["samples"]):
-        print(f"   [{i+1}] {s}")
-PYEOF
-```
+完整脚本参考 `references/data-extraction.md` 的 Agent A 部分。
 
 #### Agent B: 会话元数据提取
 
@@ -144,59 +113,7 @@ PYEOF
 3. 提取所有 `first_prompt`（这是判断工作内容的关键线索）
 4. 汇总全局统计数据
 
-```bash
-python3 << 'PYEOF'
-import json, os, glob
-from datetime import datetime
-from collections import defaultdict
-
-START_DATE = "$START_DATE"  # YYYY-MM-DD 格式
-END_DATE = "$END_DATE"
-
-meta_dir = os.path.expanduser("~/.claude/usage-data/session-meta/")
-projects = defaultdict(lambda: {
-    "sessions": 0, "duration": 0, "lines_added": 0, "lines_removed": 0,
-    "files_modified": 0, "messages": 0, "first_prompts": []
-})
-
-total = {"sessions": 0, "duration": 0, "lines_added": 0, "lines_removed": 0, "files_modified": 0}
-
-for f in glob.glob(os.path.join(meta_dir, "*.json")):
-    try:
-        with open(f) as fh:
-            d = json.load(fh)
-        st = d.get("start_time", "")[:10]
-        if START_DATE <= st <= END_DATE:
-            p = d.get("project_path", "unknown")
-            proj = projects[p]
-            proj["sessions"] += 1
-            proj["duration"] += d.get("duration_minutes", 0)
-            proj["lines_added"] += d.get("lines_added", 0)
-            proj["lines_removed"] += d.get("lines_removed", 0)
-            proj["files_modified"] += d.get("files_modified", 0)
-            proj["messages"] += d.get("user_message_count", 0)
-            fp = d.get("first_prompt", "")
-            if fp and len(proj["first_prompts"]) < 15:
-                proj["first_prompts"].append(fp[:200])
-            for k in total:
-                total[k] += d.get(k if k != "sessions" else "___", 0)
-            total["sessions"] += 1
-    except:
-        pass
-
-print(f"=== 全局统计 ===")
-print(f"会话数: {total['sessions']}")
-print(f"总时长: {total['duration']:.1f} 分钟 ({total['duration']/60:.1f} 小时)")
-print(f"新增代码: {total['lines_added']} 行 | 删除: {total['lines_removed']} 行")
-print(f"修改文件: {total['files_modified']} 个\n")
-
-for path, data in sorted(projects.items(), key=lambda x: -x[1]["duration"]):
-    print(f"\n## {path}")
-    print(f"   会话: {data['sessions']} | 时长: {data['duration']:.0f}min | +{data['lines_added']}/-{data['lines_removed']} 行 | 文件: {data['files_modified']}")
-    for i, fp in enumerate(data["first_prompts"]):
-        print(f"   prompt[{i+1}]: {fp}")
-PYEOF
-```
+完整脚本参考 `references/data-extraction.md` 的 Agent B 部分。
 
 #### Agent C: 活跃目录扫描
 
@@ -205,6 +122,8 @@ PYEOF
 2. 查找本周内有文件修改的子目录
 3. 对 git 仓库执行 `git log --oneline --after=START_DATE --before=END_DATE`
 4. 扫描非 git 目录中本周新建/修改的文件
+
+完整命令参考 `references/data-extraction.md` 的 Agent C 部分。
 
 这个 Agent 能捕捉到 history.jsonl 和 session-meta 可能遗漏的活动（比如手动操作、其他工具产生的变更）。
 
@@ -296,7 +215,7 @@ PYEOF
    - 列出识别到的所有项目供用户勾选
 2. **分类确认**："我把工作分成了以下 N 个板块：[板块列表]。分类是否合理？"
 
-### 第二轮确认（生成初稿后）
+### 第二轮确认（分类完成后、生成报告前）
 
 1. **下周计划**："是否需要填写下周计划？"
    - 选项：我来口述补充 / 先不写 / 帮我根据进行中的工作推测
@@ -332,7 +251,87 @@ PYEOF
 将报告保存为 Markdown 文件：
 - **文件名格式**：`周报_{YYYY-MM-DD}_{YYYY-MM-DD}.md`（起止日期）
 - **保存位置**：当前工作目录
-- 保存后展示报告全文，并告知文件路径
+- 保存后进入 Phase 5.5 自动 Review（此时不展示给用户）
+
+---
+
+## Phase 5.5: 自动 Review
+
+生成报告后、展示给用户前，启动一个 **Review Agent** 对周报做质量校验。这一步的目的是在用户看到周报前就把明显的遗漏和错误修复掉，减少来回修改的次数。
+
+### 启动方式
+
+启动一个 Agent（subagent_type: general-purpose），将以下内容传入：
+1. 生成的周报 Markdown 全文（读取刚保存的文件）
+2. Wave 1 三个 Agent 的原始数据摘要（项目全集列表、命令数、会话数、git 提交数等关键数字）——在 Wave 3 交叉校验完成时，将项目全集摘要保存到上下文中备用
+3. 用户确认的项目筛选结果（哪些纳入、哪些排除）
+
+### Review 四维度
+
+#### 维度一：完整性检查
+
+对比原始数据中**用户选择纳入**的项目列表与周报中实际出现的工作项：
+- 每个纳入的项目是否都在周报中有对应工作项？
+- 某个项目下有多项重要工作（如 git 提交涉及多个不同功能），是否都被提及？
+- 检查方法：逐项核对项目列表，标记「已覆盖 / 未覆盖」
+
+#### 维度二：数据准确性
+
+核实周报中出现的具体数字与原始数据是否一致：
+- **代码行数**：周报中的 "新增 X 行" 是否与 session-meta 的 `lines_added` 汇总吻合？
+- **文档数量**：周报中的 "文档 × N 份" 是否与实际产出物数量匹配？
+- **模块/页面数**：周报中的 "13 模块" 等数字是否有 git 提交或目录结构作为依据？
+- **数据摘要表格**：总体统计数字是否准确？
+- 允许合理的四舍五入和近似（如 "14,000+ 行" 对应实际 14,976 行是可以的），但数量级不能错
+
+#### 维度三：表述质量
+
+检查周报是否符合写作原则：
+- **业务语言**：是否存在技术术语（如 Vue3、Docker、Redis、CI/CD、API）？如有，改为业务表述
+- **结果导向**：每条工作项是否描述了"完成了什么成果"而非"做了什么动作"？
+- **篇幅控制**：整篇周报是否控制在 A4 两页以内（约 800-1000 字）？
+- **量化产出**：产出物是否都用了 "× N" 或具体数字？是否存在 "一些" "若干" 等模糊描述？
+
+#### 维度四：分类合理性
+
+检查工作项是否归入了合适的板块：
+- 每个工作项的性质是否与所在板块匹配？（如客户项目不应出现在内部工具板块）
+- 板块内的工作项排序是否按重要性递减？
+- 板块间的排序是否合理？（通常客户交付 > 产品研发 > 内部建设）
+
+### Review Agent 输出格式
+
+```
+## 周报 Review 报告
+
+### 总体结论：✅ 通过 / ⚠️ 需修改
+
+### 各维度检查结果
+
+#### 1. 完整性 ✅/⚠️
+- [结论]
+- [如有遗漏] 缺少：XXX 项目的 YYY 工作
+
+#### 2. 数据准确性 ✅/⚠️
+- [结论]
+- [如有偏差] "文档 × 9 份" 实际应为 8 份
+
+#### 3. 表述质量 ✅/⚠️
+- [结论]
+- [如有问题] 第 X 行 "Docker 部署" → 建议改为 "容器化部署方案"
+
+#### 4. 分类合理性 ✅/⚠️
+- [结论]
+
+### 修改建议（如有）
+1. 具体修改建议 1
+2. 具体修改建议 2
+```
+
+### 后续处理
+
+- **全部通过**：直接进入 Phase 6，展示报告给用户
+- **需修改**：根据 Review 报告的修改建议，用 Edit 工具逐项修复周报文件，修复完成后直接进入 Phase 6（不需要再次 Review——避免无限循环，一轮修复即可）
 
 ---
 
