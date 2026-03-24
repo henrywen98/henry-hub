@@ -7,11 +7,7 @@
   },
   "plugins": [
     { "name": "doc-coauthoring", "description": "文档协作工作流", "source": "./plugins/doc-coauthoring" },
-    { "name": "docx", "description": "Word 文档处理", "source": "./plugins/docx" },
-    { "name": "pdf", "description": "PDF 文档处理", "source": "./plugins/pdf" },
-    { "name": "pptx", "description": "PPT 文档处理", "source": "./plugins/pptx" },
     { "name": "ssot-prompt-engineer", "description": "SSOT 驱动的提示词工程", "source": "./plugins/ssot-prompt-engineer" },
-    { "name": "xlsx", "description": "Excel 文档处理", "source": "./plugins/xlsx" },
     { "name": "test-case-generator", "description": "测试用例生成器", "source": "./plugins/test-case-generator" },
     { "name": "comprehensive-test-generation", "description": "全面测试生成策略", "source": "./plugins/comprehensive-test-generation" },
     { "name": "purvar-prd", "description": "璞华PRD工作流：生成PRD、需求确认单、澄清PRD", "source": "./plugins/purvar-prd" },
