@@ -1,5 +1,5 @@
 {
   "name": "ai-pm-feedback-collector",
-  "version": "1.0.0",
-  "description": "AI产品经理需求收集与整理工具。将客户反馈快速整理成结构化文档，包括Bug描述、优化建议、优先级排序。"
+  "version": "2.0.0",
+  "description": "PM碎片信息收集与洞察整理工具。将多渠道碎片反馈整理为结构化需求洞察文档，支持JTBD场景提取、Opportunity Score评分、情感分析、下游工具衔接。"
 }
