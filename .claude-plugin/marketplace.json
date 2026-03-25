@@ -15,6 +15,7 @@
     { "name": "github-issue-generator", "description": "GitHub Issue 生成器", "source": "./plugins/github-issue-generator" },
     { "name": "meeting-prep", "description": "会议准备工具，6 问生成会前文档", "source": "./plugins/meeting-prep" },
     { "name": "weekly-report", "description": "周报生成工具，从聊天记录自动生成会议周报", "source": "./plugins/weekly-report" },
-    { "name": "bid-generator", "description": "投资管理领域标书生成工具", "source": "./plugins/bid-generator" }
+    { "name": "bid-generator", "description": "投资管理领域标书生成工具", "source": "./plugins/bid-generator" },
+    { "name": "concept-design", "description": "概要设计说明书生成工具", "source": "./plugins/concept-design" }
   ]
 }
