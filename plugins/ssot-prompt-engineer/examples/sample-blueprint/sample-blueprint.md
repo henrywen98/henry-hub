@@ -1,6 +1,7 @@
 # Skill Blueprint: 概要设计说明书
 
 > 本文件由 ssot-prompt-engineer skill 自动生成，作为 skill-creator 的输入。
+> **注意：** 本 Blueprint 反映 v1.x 的参数收集模型。concept-design skill 已于 v2.0 转为文件驱动的组装模型，详见 concept-design/SKILL.md。
 
 ## Meta
 - schema_version: 1.0
