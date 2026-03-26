@@ -1,155 +1,141 @@
 ---
 name: ssot-prompt-engineer
-description: "SSOT-Driven Prompt Engineering: Extract transformation rules from input-output pairs, codify them as a Single Source of Truth (SSOT), then derive prompts and tooling from the SSOT. Use when the user wants to: (1) analyze how inputs map to outputs and extract the underlying rules, (2) create a prompt toolkit from existing examples or templates, (3) reverse-engineer an SOP from sample inputs and outputs, (4) build reusable prompt systems where rules are separated from prompt templates, (5) formalize tacit domain knowledge into structured generation rules. Triggers: 'extract rules', 'create SSOT', 'reverse engineer the process', 'build prompt from examples', 'formalize the SOP', 'make a prompt toolkit', 'SSOT to prompt'."
+description: "This skill should be used when the user has a finished/sample document and wants to reverse-engineer its structure, writing rules, or SOP into a standardized Skill Blueprint. Typical requests include: '从这份文档提取规则', '帮我逆向工程这份概设的写作规范', 'extract rules from this sample', 'reverse engineer the SOP from this document', 'generate a skill blueprint from this report', '分析文档结构生成蓝图', '从样本提取规则做成skill'. The output is a single skill-blueprint.md file that feeds directly into skill-creator."
 ---
 
-# SSOT-Driven Prompt Engineering
+# SSOT 规则提取器
 
-A methodology for creating reliable, maintainable AI prompt systems by first extracting transformation rules as a Single Source of Truth (SSOT), then deriving all prompts and tooling from it.
+从成品文档中反向提取生成规则，输出标准化的 Skill Blueprint，作为 skill-creator 的上游输入。
 
-## Core Principle
+## 核心原则
 
 ```
-Never write prompts directly. Extract the rules first.
+从成品倒推规则，不是写 Prompt。
 
-Input Samples ──┐
-                 ├──▶ SSOT (Rules) ──▶ System Prompt
-Output Samples ──┘                  ──▶ User Prompt Templates
-                                    ──▶ Conversion Scripts
-                                    ──▶ Quality Checklists
+样本文档 ──→ [SSOT Skill: 分析 + 轻量确认] ──→ skill-blueprint.md ──→ [skill-creator]
 ```
 
-**Prompt is not the source. SSOT is the source. Prompt is a projection of SSOT.**
+**SSOT skill 是分析工具，不是生成工具。** 它的价值在于从成品中提取隐性知识并结构化，产出物是一份 Skill Blueprint 文件（固定 schema），由 skill-creator 消费并包装为可用的 skill。
 
-## Methodology: 5-Phase Process
+## 产出物
 
-### Phase 1: Collect I/O Pairs
+唯一产出：一份 `skill-blueprint.md` 文件，写入用户当前工作目录。
 
-Gather concrete input-output examples from the user's domain:
+蓝图遵循本插件 `references/blueprint-schema/blueprint-schema.md` 中定义的标准 schema（Meta + 8 个编号 section）。
 
-- **Inputs**: Source documents, raw data, requirements, etc.
-- **Outputs**: The desired deliverables (reports, test cases, code, etc.)
-- **Existing templates**: Any formatting/style references for the output
+---
 
-Ask the user:
-- "Can you show me a real input and its corresponding output?"
-- "Is there an existing template or style guide for the output?"
-- "What are the quality criteria for a good output?"
+## 工作流程（3 步）
 
-### Phase 2: Reverse-Engineer Transformation Rules
+### Step 1: 自动分析
 
-Analyze I/O pairs to extract the mapping logic. Work through three levels:
+读取用户提供的样本文档，执行以下分析：
 
-**Level 1 — Structure Mapping**
-How does the input structure map to the output structure?
-- What sections/fields from input become what sections/fields in output?
-- What is generated (not from input) but from conventions/templates?
-- What is the output's organizational hierarchy?
+1. **结构提取**：识别章节层级、表格格式、图文分布
+2. **规则提取**：识别写作模式、用词规范、句式公式
+3. **分类标注**：判断每个部分的模板化程度（固定模板 / 半模板 / 项目特定）
+4. **参数推断**：识别生成新文档时需要用户提供的变量信息
 
-**Level 2 — Content Transformation Rules**
-For each mapping, what are the specific rules?
-- Fixed templates (always the same regardless of input)
-- Conditional logic (if X in input, then Y in output)
-- Enumeration rules (for each item in input, generate N items in output)
-- Type-based rules (input type determines output pattern)
+完成后，向用户展示初步蓝图。
 
-**Level 3 — Quality Constraints**
-What makes an output "correct"?
-- Completeness: every input element has corresponding output
-- Consistency: naming conventions, formatting, terminology
-- Traceability: output can be traced back to input source
+### Step 2: 轻量确认（最少必要的确认问题，通常 1-3 个）
 
-Document these rules as the **SSOT** — a structured, hierarchical rule set.
+针对分析中无法确定的分类标注，向用户提问确认。
 
-### Phase 3: Write the SSOT Document
+**何时需要确认：**
+- 某段内容看起来很通用（可能是行业模板），但也可能是项目特有的专业表述
+- 某个章节的写作模式不确定是团队规范还是个案选择
+- 表格列结构无法判断是固定的还是灵活的
 
-Structure the SSOT as a standalone, self-contained document:
+**确认问题模式：**
+- "第X章 {章节名} 的内容看起来是行业通用的标准文本，每个项目都一样吗？"
+- "{某个写作模式} 是你们团队的统一规范，还是这个项目特有的？"
 
-```markdown
-# [Domain] SSOT
+根据回答修正分类标注。如果分析结果没有模糊点，可跳过此步。
 
-## 1. Input Structure Definition
-   (What the input looks like, its components)
+### Step 3: 输出最终蓝图
 
-## 2. Output Structure Definition
-   (What the output looks like, its format/columns/schema)
+将 `skill-blueprint.md` 写入用户当前工作目录，严格遵循标准 schema（见本插件 `references/blueprint-schema/blueprint-schema.md`）。
 
-## 3. Transformation Rules
-   (Hierarchical rules, organized by layer/category)
+完整示例见本插件 `examples/sample-blueprint/sample-blueprint.md`。
 
-   ### Rule Layer 1: ...
-   ### Rule Layer 2: ...
-   ...
+---
 
-## 4. Type-Specific Templates
-   (For each input type → output pattern mapping)
+## 分析方法论
 
-## 5. Quality Constraints
-   (Completeness, consistency, traceability requirements)
+### 结构提取
 
-## 6. Naming & Style Conventions
-   (Formatting, terminology, numbering rules)
-```
+从样本文档中识别：
+- **章节层级**：标题样式（Heading 1/2/3）→ 章/节/小节
+- **表格格式**：列定义（列名、数据类型、内容模式）
+- **图文关系**：图片位置 → 图注 → 上下文关系
+- **列表模式**：有序/无序、嵌套层级
 
-Key principles for SSOT writing:
-- **Self-contained**: Another person (or AI) can follow it without additional context
-- **Unambiguous**: Each rule has clear trigger conditions and outputs
-- **Hierarchical**: Rules organized from general to specific
-- **Testable**: Each rule can be verified against I/O pairs
+### 规则提取
 
-### Phase 4: Derive Prompts from SSOT
+对每个章节分析内容生成逻辑：
+- **用词模式**：是否有固定句式开头（如"用于..."、"功能包括但不限于..."）
+- **段落结构**：是否遵循固定的多段式结构（如"历史→政策→需求"三段式）
+- **数据引用模式**：是否有跨章节的数据一致性要求
+- **枚举规则**：列表项是否遵循统一的格式模式
 
-Generate all prompts by projecting the SSOT into the target format:
+### 分类判断
 
-**System Prompt** = SSOT rules reformulated as AI instructions:
-- Role definition + output format + complete rule set + templates + constraints + few-shot examples
-- The System Prompt should embed the SSOT, not reference it
+对每个章节/段落判断模板化程度，判断依据：
 
-**User Prompt Templates** = Parameterized input slots:
-- Structured template with `{placeholders}` for user's specific input
-- Control parameters (scope, quantity expectations, special focus areas)
+| 信号 | 倾向分类 |
+|------|----------|
+| 内容高度抽象、不含项目具体信息 | 固定模板 |
+| 结构/格式固定但填充了项目数据 | 半模板 |
+| 内容完全是项目特有的业务信息 | 项目特定 |
+| 使用了行业标准术语和通用描述 | 固定模板 |
+| 表格列结构固定但行数/内容不同 | 半模板 |
+| 无法确定 | 标记为模糊，在 Step 2 中确认 |
 
-**Multi-step strategy** (for complex domains):
-- Step 1 prompt: Framework/outline generation (broad view)
-- Step 2 prompt: Detail generation per section (deep view)
-- Each step's output feeds into the next step's input
+### 参数推断
 
-### Phase 5: Build Tooling & Validate
+从"半模板"和"项目特定"的变化点推断输入参数：
+- 半模板中的占位符 → 对应一个输入参数
+- 项目特定章节的核心数据 → 对应一组输入参数
+- 跨章节引用的共享数据 → 合并为同一个参数
 
-Create supporting tools and validate the full pipeline:
+参数命名规则：使用中文描述性名称，如"项目全称"、"技术架构"、"功能模块清单"。
 
-1. **Conversion tools**: Scripts to transform AI output into final deliverable format
-2. **Validation checklist**: Verify output against SSOT rules
-3. **Pilot test**: Run the full pipeline on a real example, compare with existing reference output
-4. **Iterate**: Adjust SSOT rules based on gaps found during validation
+---
 
-## Output Deliverables
+## 输入场景处理
 
-A complete SSOT-Driven Prompt Toolkit typically includes:
+### 场景 A：只有输出样本（主要场景）
 
-| Deliverable | Purpose |
-|-------------|---------|
-| `ssot.md` | The Single Source of Truth — all transformation rules |
-| `system_prompt.md` | System Prompt derived from SSOT |
-| `user_prompt_step1.md` | User Prompt template for framework generation |
-| `user_prompt_step2.md` | User Prompt template for detail generation |
-| `example_*.md` | Filled-in examples showing how to use the templates |
-| `convert_*.*` | Script(s) to convert AI output to final format |
-| `README.md` | Usage guide explaining the workflow |
+用户提供 1 份成品文档，没有上游输入文档。
 
-## When to Use Multi-Step vs Single-Step
+处理方式：
+1. 将整份文档视为"期望输出"
+2. 对每个章节执行结构提取 → 规则提取 → 分类判断
+3. 从变化点推断输入参数
+4. Step 2 的确认问题侧重："这部分是通用模板还是项目特有？"
 
-| Scenario | Approach |
-|----------|----------|
-| Output < 50 items, simple rules | Single-step: one prompt generates everything |
-| Output 50-200 items, moderate rules | Two-step: framework first, then details |
-| Output 200+ items or complex conditionals | Multi-step: split by section/category |
-| Multiple output types from same input | Parallel: separate prompts per output type |
+### 场景 B：有输入-输出对
 
-## Anti-Patterns to Avoid
+用户同时提供输入文档（如需求文档）和输出文档（如概设文档）。
 
-1. **Writing prompts before understanding rules** — Always extract SSOT first
-2. **Embedding rules only in prompts** — Rules should live in SSOT; prompts derive from it
-3. **Vague transformation rules** — "Generate appropriate test cases" vs "For each required field, generate: empty validation, type validation, boundary validation"
-4. **Missing few-shot examples** — Always include 2-3 concrete examples in system prompt
-5. **Monolithic prompt** — Split into system (rules) + user (input) + control (parameters)
+处理方式：
+1. 先分析输出文档的结构和规则（同场景 A）
+2. 额外分析输入→输出的映射关系：哪些输出内容可追溯到输入
+3. 映射关系纳入"项目特定规则"的"依赖参数"字段
+4. Step 2 的确认问题侧重："这个转换规则是否每次都适用？"
+
+判断逻辑：用户只提供一份文档 → 场景 A；提供两份以上且说明了输入/输出关系 → 场景 B。
+
+---
+
+## 蓝图输出前自检
+
+在输出最终 skill-blueprint.md 之前，检查以下项目：
+
+1. **Schema 完整性**：Meta + 8 个编号 section 全部填写，无空 section
+2. **分类覆盖**：输出结构定义中每个节点都有分类标注
+3. **参数闭环**：输入参数表中的每个参数，在 S5 半模板或 S6 项目特定规则中至少被引用一次
+4. **样本摘录**：S5 和 S6 的每条规则都附带从原始样本摘取的实际内容
+5. **无模糊标注**：所有在 Step 1 中标记为"模糊"的分类，在 Step 2 后都已确定
+6. **自包含**：skill-creator 只读蓝图文件就能理解全部规则，无需回看原始样本
