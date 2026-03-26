@@ -15,6 +15,7 @@
     { "name": "meeting-prep", "description": "会议准备工具，6 问生成会前文档", "source": "./plugins/meeting-prep" },
     { "name": "weekly-report", "description": "周报生成工具，从聊天记录自动生成会议周报", "source": "./plugins/weekly-report" },
     { "name": "bid-generator", "description": "投资管理领域标书生成工具", "source": "./plugins/bid-generator" },
-    { "name": "concept-design", "description": "概要设计说明书生成工具", "source": "./plugins/concept-design" }
+    { "name": "concept-design", "description": "概要设计说明书生成工具", "source": "./plugins/concept-design" },
+    { "name": "req-to-issues", "description": "需求分析拆解工具：将需求素材分析拆解为 GitHub/GitLab Issue 并批量上传", "source": "./plugins/req-to-issues" }
   ]
 }

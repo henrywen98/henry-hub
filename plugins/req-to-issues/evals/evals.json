@@ -1,0 +1,26 @@
+{
+  "skill_name": "req-to-issues",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fuzzy-requirement",
+      "prompt": "我想给系统加一个客户对账功能，客户能看到自己的欠款情况，然后可以在线付款",
+      "expected_output": "应识别出多个模糊点（角色权限、对账范围、支付方式等），提出澄清问题，最终拆解为 2-4 个 Story 级 Issue",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "meeting-notes",
+      "prompt": "会议纪要：讨论了仓库管理改造，目前问题：1. 入库单没有审批流程 2. 库存预警功能缺失，经常出现断货 3. 出库单需要支持批量操作 4. 盘点功能目前全手动，希望能扫码盘点",
+      "expected_output": "应拆解为 4 个独立 Issue（每个问题一个），识别依赖关系，每个 Issue 有完整的验收标准",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "simple-change",
+      "prompt": "销售订单列表页加一个导出 Excel 的按钮，导出当前筛选条件下的所有订单数据",
+      "expected_output": "应快速通过澄清阶段（需求明确），生成 1 个 Issue，包含导出格式、字段范围等验收标准",
+      "files": []
+    }
+  ]
+}

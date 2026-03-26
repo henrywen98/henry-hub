@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "fuzzy-requirement",
+  "prompt": "我想给系统加一个客户对账功能，客户能看到自己的欠款情况，然后可以在线付款",
+  "assertions": [
+    {
+      "name": "template_compliance",
+      "description": "每个 Issue 包含全部 7 个字段：需求描述、业务价值、验收标准、影响范围、依赖关系、约束条件、优先级+标签",
+      "type": "structural"
+    },
+    {
+      "name": "business_language",
+      "description": "需求描述中不出现技术术语（API、数据库、接口、SQL、REST、表名等）",
+      "type": "content"
+    },
+    {
+      "name": "verifiable_acceptance",
+      "description": "每条验收标准都是客观可判定的（能回答是/否通过），无模糊描述",
+      "type": "content"
+    },
+    {
+      "name": "ambiguity_identification",
+      "description": "识别出至少 3 个模糊点（如：角色权限、对账范围、支付渠道、数据粒度等）",
+      "type": "process"
+    },
+    {
+      "name": "story_level_granularity",
+      "description": "拆解为 2-4 个 Story 级别 Issue，每个独立可交付",
+      "type": "structural"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "req-to-issues",
+  "version": "1.0.0",
+  "description": "需求分析拆解工具。/req-to-issues 将需求素材分析拆解为 GitHub/GitLab Issue 并批量上传，/req-to-issues.dry 仅生成预览不上传。"
+}

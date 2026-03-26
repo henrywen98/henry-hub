@@ -1,0 +1,32 @@
+{
+  "eval_id": 3,
+  "eval_name": "simple-change",
+  "prompt": "销售订单列表页加一个导出 Excel 的按钮，导出当前筛选条件下的所有订单数据",
+  "assertions": [
+    {
+      "name": "template_compliance",
+      "description": "Issue 包含全部 7 个字段",
+      "type": "structural"
+    },
+    {
+      "name": "business_language",
+      "description": "需求描述中不出现技术术语",
+      "type": "content"
+    },
+    {
+      "name": "verifiable_acceptance",
+      "description": "每条验收标准都是客观可判定的",
+      "type": "content"
+    },
+    {
+      "name": "single_issue",
+      "description": "不过度拆分，应生成 1 个 Issue（需求本身就是一个独立功能点）",
+      "type": "structural"
+    },
+    {
+      "name": "minimal_clarification",
+      "description": "识别的模糊点少（0-2 个），不过度提问",
+      "type": "process"
+    }
+  ]
+}

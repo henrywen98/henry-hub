@@ -1,0 +1,37 @@
+{
+  "eval_id": 2,
+  "eval_name": "meeting-notes",
+  "prompt": "会议纪要：讨论了仓库管理改造，目前问题：1. 入库单没有审批流程 2. 库存预警功能缺失，经常出现断货 3. 出库单需要支持批量操作 4. 盘点功能目前全手动，希望能扫码盘点",
+  "assertions": [
+    {
+      "name": "template_compliance",
+      "description": "每个 Issue 包含全部 7 个字段",
+      "type": "structural"
+    },
+    {
+      "name": "business_language",
+      "description": "需求描述中不出现技术术语",
+      "type": "content"
+    },
+    {
+      "name": "verifiable_acceptance",
+      "description": "每条验收标准都是客观可判定的",
+      "type": "content"
+    },
+    {
+      "name": "correct_decomposition",
+      "description": "拆解为 4 个独立 Issue，分别对应入库审批、库存预警、批量出库、扫码盘点",
+      "type": "structural"
+    },
+    {
+      "name": "dependency_mapping",
+      "description": "正确标注 Issue 之间的依赖关系（如有）",
+      "type": "structural"
+    },
+    {
+      "name": "priority_differentiation",
+      "description": "不同 Issue 的优先级有区分（不全是同一优先级）",
+      "type": "content"
+    }
+  ]
+}
