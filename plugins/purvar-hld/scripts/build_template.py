@@ -344,9 +344,13 @@ def verify_template(path):
 
 
 if __name__ == '__main__':
-    SRC = "/Users/henry/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/wxid_3qw8e58pxmvj22_cc07/msg/attach/6510d4b14e12f60272ad1255c644d764/2026-03/Rec/f62b1134ec327b53/F/3/2-12金财投资企业信息门户升级项目概要设计.docx"
+    if len(sys.argv) < 2:
+        print("用法: build_template.py <源docx文件> [输出路径]")
+        print("示例: build_template.py 参考概设.docx")
+        sys.exit(1)
+    SRC = sys.argv[1]
     SCRIPT_DIR = Path(__file__).resolve().parent
-    DST = sys.argv[1] if len(sys.argv) > 1 else str(SCRIPT_DIR.parent / "templates" / "reference.docx")
+    DST = sys.argv[2] if len(sys.argv) > 2 else str(SCRIPT_DIR.parent / "templates" / "reference.docx")
 
     print(f"构建模板: {DST}")
     build_template(SRC, DST)
