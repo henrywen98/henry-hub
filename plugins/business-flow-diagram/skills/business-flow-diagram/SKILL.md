@@ -244,8 +244,49 @@ It checks 5 things:
 
 ---
 
-## Phase 5: Deliver
+## Phase 5: Visual Verification (important!)
+
+Programmatic checks catch structural issues but miss visual problems — text overlapping in ways the coordinate check doesn't detect, arrows pointing to wrong places, unbalanced layout, etc. This phase uses **visual inspection** to catch those.
+
+### How to Get a Screenshot
+
+Pick whichever method is available in the current environment:
+
+| Method | When to Use | How |
+|--------|------------|-----|
+| **Excalidraw MCP** | `mcp__claude_ai_Excalidraw__create_view` is available | Restore elements via `create_view`, the inline view IS the visual check |
+| **Browser automation** | `mcp__claude-in-chrome__*` is available | Open excalidraw.com, load the file via JS, take screenshot |
+| **IDE preview** | VS Code / Cursor with Excalidraw extension | `code <file>` then `screencapture` |
+| **macOS Quick Look** | None of the above | `qlmanage -t -s 2000 -o /tmp/ <file>` (may not support .excalidraw) |
+| **Ask the user** | All above fail | Ask user to open the file and paste a screenshot |
+
+Use the `Read` tool on the screenshot to visually inspect. Check for:
+- **Text readability** — can all labels be read? Any garbled characters?
+- **Layout balance** — are modules evenly spaced? Any area too crowded?
+- **Arrow routing** — do arrows go through boxes instead of around them?
+- **Color coding** — are different modules visually distinguishable?
+- **Completeness** — are all expected modules, states, and automations visible?
+
+### Step 3: Fix and Re-verify
+
+If visual issues are found:
+1. Identify the problematic elements by ID (based on position/content)
+2. Adjust coordinates in the element data
+3. Regenerate the `.excalidraw` file
+4. Re-run programmatic verification (Phase 4)
+5. Re-screenshot and inspect again
+
+**Repeat until the diagram looks correct visually.**
+
+> Note: if the environment does not support screenshots (headless server, no VS Code), skip this phase and rely on Phase 4 programmatic verification. Always tell the user if visual verification was skipped.
+
+---
+
+## Phase 6: Deliver
 
 1. Save `.excalidraw` to the project root (or user-specified path)
-2. Report: file path, module count, automation count, gap count, verification result
-3. Explain: open at excalidraw.com → Open → select file → Export as PNG/SVG
+2. Report:
+   - File path and size
+   - Number of modules, automations, and gaps identified
+   - Verification result (programmatic + visual)
+3. Explain how to open: VS Code (click the file) or excalidraw.com → Open
