@@ -32,11 +32,13 @@ Phase 1: Extract Business Logic (parallel agents or document reading)
     |
 Phase 2: Synthesize & Gap Analysis
     |
-Phase 3: Generate Excalidraw Elements
+Phase 3: Generate .excalidraw File (Write tool, no dependencies)
     |
-Phase 4: Automated Verification Loop
+Phase 4: Self-Verification (Read + check JSON content)
     |
-Phase 5: Deliver .excalidraw file
+Phase 5: Visual Verification (screenshot + inspect)
+    |
+Phase 6: Deliver
 ```
 
 ---
@@ -137,39 +139,60 @@ Gaps found:
 
 ---
 
-## Phase 3: Generate Excalidraw Elements
+## Phase 3: Generate .excalidraw File
 
-Use the bundled converter script at: `${CLAUDE_PLUGIN_ROOT}/skills/business-flow-diagram/scripts/gen_excalidraw.py`
+Directly write a `.excalidraw` JSON file using the `Write` tool. No scripts or dependencies needed.
 
-### Usage Pattern
+### File Format
 
-Create a wrapper script (e.g., `/tmp/diagram_data.py`) that defines elements and calls the converter:
+The `.excalidraw` format is a JSON file. Excalidraw will auto-calculate missing fields (seed, version, text dimensions) when opened, so only include what matters:
 
-```python
-import sys
-sys.path.insert(0, "${CLAUDE_PLUGIN_ROOT}/skills/business-flow-diagram/scripts")
-from gen_excalidraw import convert_and_save
-
-elements = [
-    # Zone background (draw first)
-    {"type":"rectangle","id":"zone1","x":20,"y":70,"width":440,"height":520,
-     "backgroundColor":"#dbe4ff","fillStyle":"solid","roundness":{"type":3},
-     "strokeColor":"#4a9eed","strokeWidth":1,"opacity":35},
-    # Zone title
-    {"type":"text","id":"z1t","x":32,"y":78,"text":"销售管理",
-     "fontSize":20,"strokeColor":"#2563eb"},
-    # State box with label
-    {"type":"rectangle","id":"s1","x":45,"y":150,"width":105,"height":42,
-     "backgroundColor":"#a5d8ff","fillStyle":"solid","roundness":{"type":3},
-     "strokeColor":"#4a9eed","label":{"text":"草稿","fontSize":15}},
-    # Arrow between states
-    {"type":"arrow","id":"a1","x":150,"y":171,"width":25,"height":0,
-     "points":[[0,0],[25,0]],"strokeColor":"#4a9eed","strokeWidth":2,
-     "endArrowhead":"arrow"},
-]
-
-convert_and_save(elements, "业务流程全景图.excalidraw")
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [ ...element objects... ],
+  "appState": { "viewBackgroundColor": "#ffffff" },
+  "files": {}
+}
 ```
+
+### Element Types
+
+**Rectangle** (for zones, state boxes):
+```json
+{"type":"rectangle","id":"s1","x":45,"y":150,"width":105,"height":42,
+ "backgroundColor":"#a5d8ff","fillStyle":"solid","roughness":0,
+ "roundness":{"type":3},"strokeColor":"#4a9eed","strokeWidth":1}
+```
+
+**Text** (for labels, annotations):
+```json
+{"type":"text","id":"t1","x":32,"y":78,"text":"销售管理",
+ "fontSize":20,"fontFamily":2,"strokeColor":"#2563eb"}
+```
+
+**Arrow** (for connections):
+```json
+{"type":"arrow","id":"a1","x":150,"y":171,"width":25,"height":0,
+ "points":[[0,0],[25,0]],"strokeColor":"#4a9eed","strokeWidth":2,
+ "endArrowhead":"arrow"}
+```
+
+**Diamond** (for decision points):
+```json
+{"type":"diamond","id":"d1","x":100,"y":100,"width":200,"height":80,
+ "backgroundColor":"#fff3bf","fillStyle":"solid","strokeColor":"#f59e0b"}
+```
+
+### Key Rules
+
+- **fontFamily must be 2** — sans-serif font that supports Chinese. fontFamily 1 (hand-drawn) and 3 (code) break CJK rendering
+- **roughness should be 0** — clean lines, more readable for business diagrams
+- **Text in shapes**: use separate text elements positioned inside the shape (Excalidraw auto-adjusts on open). For a 105x42 box at (45,150), center text at roughly (60, 162)
+- **IDs must be unique** across all elements
+- **Arrow step paths**: use multi-point arrays for routing, e.g., `"points":[[0,0],[0,30],[-200,30],[-200,60]]` creates a step-down-left pattern
 
 ### Layout Rules
 
@@ -219,34 +242,37 @@ All diagram text must use business language:
 
 ---
 
-## Phase 4: Automated Verification
+## Phase 4: Self-Verification
 
-Run the bundled verification script: `${CLAUDE_PLUGIN_ROOT}/skills/business-flow-diagram/scripts/verify_excalidraw.py`
+Read the generated `.excalidraw` file and check for these issues. No scripts needed — just read and inspect the JSON content.
 
-```bash
-python verify_excalidraw.py <output.excalidraw>
-```
+### What to Check
 
-It checks 5 things:
-1. **Encoding** — no corrupted characters (U+FFFD)
-2. **Font** — all text uses fontFamily 2 (CJK-compatible sans-serif)
-3. **Tech terms** — no code terminology in displayed text
-4. **Overlaps** — no elements overlapping >30% area
-5. **Overflow** — no bound text wider than its container
+1. **Encoding** — search for `\ufffd` or garbled characters in text fields
+2. **Font** — every element with `fontFamily` should be `2` (not 1 or 3)
+3. **Tech terms** — scan all `"text"` values for code terms (function names, event names, domain jargon). Every piece of text should be understandable by a non-technical business person
+4. **Overlaps** — for elements that are close together, verify their bounding boxes don't significantly overlap (same x/y range with similar width/height)
+5. **Completeness** — cross-check against the Phase 2 blueprint: is every module, state, automation, and gap represented?
 
-**If verification fails**, fix the issue and regenerate:
-- Corrupted chars → use `\uXXXX` unicode escapes
-- Tech terms → replace with business equivalents
-- Overlaps → adjust coordinates to add spacing
-- Overflow → widen container or shorten label
+### How to Check
 
-**Repeat until all checks pass.**
+Read the file with the `Read` tool (it's JSON, fully readable). Scan through the `elements` array and verify the above. Due to file size, read in sections (offset/limit) if needed.
+
+### If Issues Found
+
+Edit the `.excalidraw` file directly using the `Edit` tool to fix:
+- Wrong `fontFamily` → change to `2`
+- Tech terms in `"text"` → replace with business language
+- Overlapping elements → adjust `x`/`y` coordinates
+- Missing elements → add them
+
+**Repeat read-check-fix until clean.**
 
 ---
 
 ## Phase 5: Visual Verification (important!)
 
-Programmatic checks catch structural issues but miss visual problems — text overlapping in ways the coordinate check doesn't detect, arrows pointing to wrong places, unbalanced layout, etc. This phase uses **visual inspection** to catch those.
+Phase 4 catches structural issues by reading JSON, but misses visual problems — text that technically doesn't overlap but looks cramped, arrows that point to wrong places visually, unbalanced layout, etc. This phase uses **visual inspection** to catch those.
 
 ### How to Get a Screenshot
 
@@ -273,12 +299,12 @@ If visual issues are found:
 1. Identify the problematic elements by ID (based on position/content)
 2. Adjust coordinates in the element data
 3. Regenerate the `.excalidraw` file
-4. Re-run programmatic verification (Phase 4)
+4. Re-run Phase 4 self-verification
 5. Re-screenshot and inspect again
 
 **Repeat until the diagram looks correct visually.**
 
-> Note: if the environment does not support screenshots (headless server, no VS Code), skip this phase and rely on Phase 4 programmatic verification. Always tell the user if visual verification was skipped.
+> Note: if no screenshot method is available, skip this phase and rely on Phase 4. Always tell the user if visual verification was skipped.
 
 ---
 
