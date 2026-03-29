@@ -1,0 +1,5 @@
+{
+  "name": "business-flow-diagram",
+  "version": "1.0.0",
+  "description": "Analyze codebase business logic and generate comprehensive Excalidraw flow diagrams in business-friendly Chinese"
+}

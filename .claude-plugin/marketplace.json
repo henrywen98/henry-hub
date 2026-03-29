@@ -16,6 +16,7 @@
     { "name": "weekly-report", "description": "周报生成工具，从聊天记录自动生成会议周报", "source": "./plugins/weekly-report" },
     { "name": "bid-generator", "description": "投资管理领域标书生成工具", "source": "./plugins/bid-generator" },
     { "name": "purvar-hld", "description": "璞华概要设计说明书：组装概设 + Word转换", "source": "./plugins/purvar-hld" },
-    { "name": "req-to-issues", "description": "需求分析拆解工具：将需求素材分析拆解为 GitHub/GitLab Issue 并批量上传", "source": "./plugins/req-to-issues" }
+    { "name": "req-to-issues", "description": "需求分析拆解工具：将需求素材分析拆解为 GitHub/GitLab Issue 并批量上传", "source": "./plugins/req-to-issues" },
+    { "name": "business-flow-diagram", "description": "从代码或需求文档生成Excalidraw业务流程全景图，自动发现逻辑断点", "source": "./plugins/business-flow-diagram" }
   ]
 }
