@@ -1,0 +1,5 @@
+{
+  "name": "svg-diagram",
+  "version": "1.0.0",
+  "description": "SVG图表生成器：流程图、架构图、系统拓扑图、时序图，支持中文"
+}
