@@ -1,6 +1,6 @@
 # Henry Hub Marketplace
 
-> Version: v0.5.0 (2026-03-26)
+> Version: v0.6.0 (2026-03-31)
 
 Personal Claude Code plugin marketplace (`henrywen98/henry-hub`).
 
@@ -65,10 +65,11 @@ Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name
 | Category | Plugins |
 |----------|---------|
 | Document Processing | concept-design |
-| Requirements & Workflow | doc-coauthoring, ai-pm-feedback-collector, purvar-prd, req-to-issues |
+| Requirements & Workflow | ai-pm-feedback-collector, purvar-prd, req-to-issues |
 | Testing | test-case-generator, comprehensive-test-generation |
 | Bidding | bid-generator |
 | Efficiency | meeting-prep, weekly-report |
+| Visualization | drawio-diagram |
 | Dev Tools | ssot-prompt-engineer |
 
 ## Versioning

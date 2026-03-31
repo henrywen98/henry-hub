@@ -6,7 +6,6 @@
     "email": "henrywen030@icloud.com"
   },
   "plugins": [
-    { "name": "doc-coauthoring", "description": "文档协作工作流", "source": "./plugins/doc-coauthoring" },
     { "name": "ssot-prompt-engineer", "description": "SSOT 规则提取器：从成品文档反向提取生成规则，输出标准化 Skill Blueprint 供 skill-creator 消费", "source": "./plugins/ssot-prompt-engineer" },
     { "name": "test-case-generator", "description": "测试用例生成器", "source": "./plugins/test-case-generator" },
     { "name": "comprehensive-test-generation", "description": "全面测试生成策略", "source": "./plugins/comprehensive-test-generation" },
@@ -17,7 +16,6 @@
     { "name": "bid-generator", "description": "投资管理领域标书生成工具", "source": "./plugins/bid-generator" },
     { "name": "purvar-hld", "description": "璞华概要设计说明书：组装概设 + Word转换", "source": "./plugins/purvar-hld" },
     { "name": "req-to-issues", "description": "需求分析拆解工具：将需求素材分析拆解为 GitHub/GitLab Issue 并批量上传", "source": "./plugins/req-to-issues" },
-    { "name": "business-flow-diagram", "description": "从代码或需求文档生成Excalidraw业务流程全景图，自动发现逻辑断点", "source": "./plugins/business-flow-diagram" },
-    { "name": "svg-diagram", "description": "SVG图表生成器：流程图、架构图、系统拓扑图、时序图，支持中文", "source": "./plugins/svg-diagram" }
+    { "name": "drawio-diagram", "description": "Draw.io 图表生成器：流程图、架构图、系统拓扑图、业务流程全景图，支持自动核验和复杂流程分区", "source": "./plugins/drawio-diagram" }
   ]
 }
