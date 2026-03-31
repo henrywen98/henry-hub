@@ -1,0 +1,5 @@
+{
+  "name": "drawio-diagram",
+  "version": "1.0.0",
+  "description": "Draw.io 图表生成器：流程图、架构图、系统拓扑图、业务流程全景图，支持自动核验和复杂流程分区"
+}
