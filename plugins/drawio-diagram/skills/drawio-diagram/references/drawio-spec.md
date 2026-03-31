@@ -278,54 +278,7 @@ Same as above but without `dashed=1;dashPattern=5 5`.
 <a id="connectors"></a>
 ## 6. Connector / Arrow Patterns
 
-### Connection Point Control (IMPORTANT)
-
-By default, draw.io auto-routes arrows from center-to-center, which causes arrows to cross over other elements' text. Always use `exitX`, `exitY`, `entryX`, `entryY` to control exactly which edge of a shape the arrow leaves from and arrives at:
-
-```
-exitX/entryX: 0 = left edge, 0.5 = center, 1 = right edge
-exitY/entryY: 0 = top edge, 0.5 = center, 1 = bottom edge
-```
-
-Example — arrow leaves from bottom-center of source, enters top-center of target:
-```xml
-<mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#333333;strokeWidth=2;" edge="1" parent="1" source="box1" target="box2">
-  <mxGeometry relative="1" as="geometry" />
-</mxCell>
-```
-
-**When to use specific exit/entry points:**
-- **Vertical flow** (top-to-bottom): `exitX=0.5;exitY=1` (bottom) → `entryX=0.5;entryY=0` (top)
-- **Horizontal flow** (left-to-right): `exitX=1;exitY=0.5` (right) → `entryX=0;entryY=0.5` (left)
-- **Diagonal / cross-layer**: use the edge closest to the target to minimize crossing other elements
-- **Multiple arrows from same node**: spread exit points (e.g., `exitX=0.25`, `exitX=0.5`, `exitX=0.75`) to avoid overlap
-
-### Arrow-Text Collision Avoidance
-
-This is the most common visual quality issue. Arrows that cross through other nodes' text make diagrams hard to read.
-
-**Prevention strategies:**
-1. **Use `rounded=1`** in edge style — curved routing avoids sharp overlaps
-2. **Specify exit/entry points** on the nearest edges — prevents long horizontal runs through text
-3. **Use waypoints** to route around crowded areas (see "Arrow with waypoints" below)
-4. **Increase layer spacing** — if arrows between layers cross other nodes, the layers are too close. Use ≥ 80px gap between layer groups
-5. **Fan-out pattern**: when one node connects to multiple targets in a row, use spread exit points instead of all leaving from the same point
-
-**Bad pattern** — three services all connecting to same database via auto-route:
-```
-[SvcA]   [SvcB]   [SvcC]      ← arrows from center of each
-   \       |       /           ← cross through each other's text
-    \      |      /
-       [Database]
-```
-
-**Good pattern** — use exit/entry points to create clean vertical drops:
-```
-[SvcA]   [SvcB]   [SvcC]      ← each arrow exits bottom-center
-   |       |       |           ← clean parallel lines, no crossing
-   ↓       ↓       ↓
-       [Database]              ← entry at top: entryX=0.25, 0.5, 0.75
-```
+**For comprehensive edge routing rules** (obstacle avoidance, mental verification checklist, fan-out patterns), see `edge-routing.md`.
 
 ### Basic arrow (connected to source and target)
 ```xml
@@ -333,7 +286,15 @@ This is the most common visual quality issue. Arrows that cross through other no
   <mxGeometry relative="1" as="geometry" />
 </mxCell>
 ```
-`orthogonalEdgeStyle` creates right-angle routing. `rounded=1` softens corners. Always include `exitX/Y` and `entryX/Y` for predictable routing.
+`orthogonalEdgeStyle` creates right-angle routing. `rounded=1` softens corners. Always include `exitX/Y` and `entryX/Y` for predictable routing. See `edge-routing.md` for the 7 rules governing arrow placement.
+
+### Animated arrow (flow animation)
+```xml
+<mxCell id="e_anim" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;strokeWidth=2;flowAnimation=1;" edge="1" parent="1" source="a" target="b">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+```
+`flowAnimation=1` adds a moving dot animation along the edge. Useful for showing data flow direction in architecture diagrams.
 
 ### Arrow with label
 ```xml
@@ -641,29 +602,7 @@ Steps:
 
 Tip: For N nodes in a container of width W, each node's x = `container_x + GROUP_PAD + i * ((W - 2*GROUP_PAD) / N)`
 
-### Architecture Diagram Connection Pattern (IMPORTANT)
-
-Architecture diagrams have **many-to-many connections** between layers. Use `edgeStyle=orthogonalEdgeStyle` (user-preferred aesthetic), but carefully manage exit/entry points to prevent overlap.
-
-**Key rules for architecture arrows:**
-1. **Container labels must be external** (see "Dashed container with external label" above) — if the label is inline at the top of a container, arrows entering from above will cross through it
-2. **Fan out exit/entry points** so parallel arrows don't share the same path
-3. **Use `rounded=1`** for softer corners at bends
-
-**Fan-out pattern for many-to-many connections:**
-When 3 services each connect to 2 databases (6 lines), stagger both exit and entry points:
-```
-Service A      Service B      Service C
-exitX=0.35     exitX=0.35     exitX=0.35      ← DB connections exit left-of-center
-exitX=0.65     exitX=0.65     exitX=0.65      ← Cache connections exit right-of-center
-     |    \       |    |       /    |
-     ↓     \      ↓    ↓      /     ↓
- entryX=    \  entryX= entryX=  /  entryX=
-  0.25       \  0.5    0.5    /     0.75
-    [PostgreSQL]            [Redis]
-```
-
-Spread `entryX` across the target (0.25, 0.5, 0.75) so arrows arrive at different points instead of all converging on center.
+**For architecture diagram connection patterns** (external labels, fan-out, obstacle avoidance), see `edge-routing.md` Section 4.
 
 ---
 
@@ -673,26 +612,23 @@ Spread `entryX` across the target (0.25, 0.5, 0.75) so arrows arrive at differen
 ### DO
 - Set `pageWidth`/`pageHeight` based on content before writing elements
 - Use `edgeStyle=orthogonalEdgeStyle;rounded=1` for clean routing with soft corners
-- **Always specify `exitX/Y` and `entryX/Y`** on edges to prevent arrows crossing through text
-- Use `rounded=1` on edges — curved routing avoids sharp overlaps at intersections
+- Follow the 7 edge routing rules in `edge-routing.md`
 - Use consistent colors within a module — same fill+stroke pair
 - Keep `strokeWidth` consistent: 2px for main arrows, 1px for secondary
 - Use `dashed=1` for optional/async flows
 - Test that `value` text fits within `width` × `height` — Chinese characters are ~14px wide at fontSize=13
 - For text with `&#xa;` line breaks, increase element `height` by ~20px per line
-- **Leave ≥ 80px vertical gap** between layer groups so arrows have room to route
-- **Fan out connection points** when multiple arrows leave/enter the same node (spread `exitX` values)
+- Leave ≥ 80px vertical gap between layer groups
 
 ### DON'T
-- **Don't omit `exitX/Y` and `entryX/Y`** — without them, arrows auto-route from center and cross through other nodes' text
+- **Don't include XML comments** (`<!-- -->`). draw.io strips comments on save, which breaks structural references and edit patterns.
 - Don't use `fontFamily` in style unless you have a specific reason — draw.io default CJK font works well
 - Don't make shapes too small for their text (min 120x40 for 4-char Chinese label)
 - Don't use more than 5 colors per diagram
 - Don't forget `id="0"` and `id="1" parent="0"` root cells (file won't open without them)
 - Don't reuse IDs across elements within the same page
-- Don't place all arrows before shapes — interleave them for readability in XML
+- Don't nest `<mxCell>` inside another `<mxCell>` — all cells must be siblings
 - Don't use `shadow=1` in the mxGraphModel unless the user specifically wants it
-- **Don't connect distant nodes across a row without waypoints** — the horizontal segment will cross through intermediate nodes
 
 ### Edge Alignment
 When auto-routing doesn't place arrows well, use the `Array as="points"` pattern to manually route:
