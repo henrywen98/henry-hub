@@ -265,7 +265,15 @@ After generating the `.drawio` file, verify its visual quality.
 
 ### Export to PNG
 
-Try methods in priority order:
+先检查可用的导出工具，再按优先级尝试：
+
+```bash
+# 检查前置依赖
+docker --version 2>/dev/null  # Docker（Method 1 需要）
+"/Applications/Draw.io.app/Contents/MacOS/draw.io" --version 2>/dev/null  # draw.io 桌面版（Method 2 需要）
+```
+
+如果 Docker 不可用且图表复杂（14+ 节点），提示用户安装 Docker 或手动在 draw.io 桌面版中导出（File → Export as → PNG）。
 
 **Method 1: Docker export-server (preferred — most reliable)**
 
