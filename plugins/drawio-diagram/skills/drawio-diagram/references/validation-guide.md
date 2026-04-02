@@ -104,7 +104,17 @@ AI 生成的 draw.io XML 常见的错误及修复方法：
 | 缺少根 mxCell | 文件无法打开 | 确保每个 `<root>` 内有 `<mxCell id="0"/>` 和 `<mxCell id="1" parent="0"/>` |
 | mxCell 嵌套 | draw.io 解析异常 | 把嵌套的 mxCell 提升为兄弟元素 |
 | ID 重复 | 元素相互覆盖 | 给重复 ID 加后缀 `_2`, `_3` |
+| 字符串 Cell ID | web 版 `d.setId is not a function` 错误、桌面版打开异常 | 改为数字 ID（`id="2"`, `id="3"`, ...），不要用 `id="start"` 等字符串 |
+| pageHeight 不足 | 桌面版 CLI `Export failed`，内容被截断 | `pageHeight` 必须 ≥ 内容最大 y 坐标 + 底部元素高度 + 100px 余量 |
 | 包含 wrapper 标签 | 多层嵌套 | 去除多余的 `<mxfile>` 等 wrapper |
+
+### PNG 导出失败
+
+| 症状 | 原因 | 修复 |
+|------|------|------|
+| CLI `Export failed`（无详细错误） | draw.io Electron 渲染器对复杂图（14+ 节点 + orthogonal 分支 edge）有 bug | 改用 Docker `jgraph/export-server`（见 SKILL.md Phase 4） |
+| `d.setId is not a function` | Cell ID 使用了字符串格式 | 将所有 cell ID 改为数字 |
+| 导出为空白或黑色背景 | 缺少背景色参数 | export-server 加 `-d "bg=ffffff"`；CLI 加 `--border 10` |
 
 ### 编码错误
 

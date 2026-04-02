@@ -226,6 +226,8 @@ For simple diagrams (1-3 pages), generate sequentially.
 - draw.io files are XML: `<mxfile>` → `<diagram>` → `<mxGraphModel>` → `<root>` → `<mxCell>`
 - Every page needs root cells: `<mxCell id="0"/>` and `<mxCell id="1" parent="0"/>`
 - All `<mxCell>` elements must be **siblings** — never nest mxCell inside another mxCell
+- **Cell ID 必须用数字**（如 `id="2"`, `id="3"`），不要用字符串 ID（如 `id="start"`, `id="process1"`）。字符串 ID 会导致 draw.io web 版出现 `d.setId is not a function` 错误，桌面版也可能异常。
+- **pageHeight 要匹配内容高度** — 垂直流程图如果内容超过 900px，必须增大 `pageHeight`（如 1800）。内容超出 pageHeight 时桌面版 CLI 会 Export failed。
 - **Never include XML comments** (`<!-- -->`). draw.io strips comments, which breaks structural references.
 - Chinese text works natively — no special font configuration needed
 - Use `html=1` and `&lt;br&gt;` for multi-line text in values
@@ -265,16 +267,38 @@ After generating the `.drawio` file, verify its visual quality.
 
 Try methods in priority order:
 
-**Method 1: draw.io CLI (preferred)**
+**Method 1: Docker export-server (preferred — most reliable)**
+
+`jgraph/export-server` 是 draw.io 官方导出服务，基于 Puppeteer + Chrome，无 Electron 渲染限制。
+
 ```bash
-/Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -s 2 -o /tmp/diagram-verify.png <file>.drawio
+# 启动（首次会自动 pull 镜像）
+docker run -d --rm --name drawio-export -p 8000:8000 jgraph/export-server
+
+# 导出 PNG
+curl -X POST http://localhost:8000/ \
+  --data-urlencode "xml@<file>.drawio" \
+  -d "format=png" -d "scale=2" -d "border=10" -d "bg=ffffff" \
+  -o /tmp/diagram-verify.png
+
+# 用完停掉
+docker rm -f drawio-export
+```
+For multi-page: add `-d "pageId=<diagram-id>"` to select a specific page.
+
+**Method 2: draw.io CLI (simple diagrams only)**
+
+> ⚠️ draw.io desktop CLI (Electron) 对复杂图有渲染 bug：节点 14+ 且含分支 edge 路由时会静默 `Export failed`，macOS 上尤为严重。仅适用于简单图（<13 节点）。
+
+```bash
+"/Applications/Draw.io.app/Contents/MacOS/draw.io" -x -f png --scale 2 -o /tmp/diagram-verify.png <file>.drawio
 ```
 For multi-page: add `-p <page_index>` (0-based).
 
-**Method 2: Playwright (fallback)**
+**Method 3: Playwright (fallback)**
 Open `https://app.diagrams.net` headless, import file, screenshot.
 
-**Method 3: Browser MCP (fallback)**
+**Method 4: Browser MCP (fallback)**
 Use `mcp__claude-in-chrome__*` tools if available.
 
 ### Structured Inspection

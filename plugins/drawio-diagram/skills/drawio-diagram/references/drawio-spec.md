@@ -23,18 +23,15 @@ Complete reference for generating `.drawio` diagram files with CJK support.
 Every `.drawio` file is XML with this structure:
 
 ```xml
-<mxfile host="app.diagrams.net">
+<mxfile>
   <diagram id="page1" name="页面名称">
     <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1"
                   tooltips="1" connect="1" arrows="1" fold="1" page="1"
                   pageScale="1" pageWidth="1200" pageHeight="900"
                   math="0" shadow="0">
       <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-
-        <!-- All diagram elements go here as mxCell elements -->
-
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
       </root>
     </mxGraphModel>
   </diagram>
@@ -43,10 +40,12 @@ Every `.drawio` file is XML with this structure:
 
 **Key rules:**
 - `mxCell id="0"` and `mxCell id="1" parent="0"` are mandatory root cells — always include them
+- **Cell ID 必须用数字**（`id="2"`, `id="3"`, ...），不要用字符串 ID（如 `id="start"`）。字符串 ID 在 draw.io web 版会导致 `d.setId is not a function` 解析错误。
 - All visible elements have `parent="1"` (child of the default layer)
-- `pageWidth` / `pageHeight` set the visible canvas size — adjust to fit content
+- `pageWidth` / `pageHeight` set the visible canvas size — **必须匹配内容实际高度**。垂直流程图超过 900px 时需增大 `pageHeight`（如 1800），否则桌面版 CLI 导出会 `Export failed`。
 - `dx` / `dy` control the scroll offset — use `dx` ≈ `pageWidth` and `dy` ≈ `pageHeight * 0.7` for centered view
 - `gridSize="10"` means 10px snap grid; all coordinates should be multiples of 10 for clean alignment
+- `<mxfile>` 标签不要加 `host` 属性（省略即可），避免兼容性问题
 
 ### Element Types
 
