@@ -107,7 +107,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - Every issue title must be unique within this report.
 - The orchestrator parses your output programmatically. Strict template adherence is mandatory.
 
-Output the Review Report and nothing else. No preamble, no commentary outside the template.
+Output the Review Report and nothing else. The first character of your response MUST be `#` (the start of `## Review Report`). Any preamble — including greetings, acknowledgements, addressing other entities (Mossquill, the user, anyone), or "I'll start by..." narration — is a task failure that breaks parsing.
 ```
 
 Wait for the agent to complete. Capture its full output as `current_review_report`.
@@ -185,7 +185,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - Issue titles must match the reviewer's titles VERBATIM (exact case, exact whitespace). The orchestrator compares titles across rounds.
 - The Summary counts must match the actual entries above.
 
-Output the Correction Report and nothing else. No preamble.
+Output the Correction Report and nothing else. The first character of your response MUST be `#` (the start of `## Correction Report`). Any preamble — including greetings, acknowledgements, addressing other entities (Mossquill, the user, anyone), or "I'll start by..." narration — is a task failure that breaks parsing.
 ```
 
 Wait for completion. Capture full output as `current_correction_report`.
