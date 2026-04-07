@@ -79,7 +79,7 @@ If it differs in round ≥ 2 → check: was this our corrector's edit (expected)
 
 ### Step 3b: Dispatch the Reviewer Agent
 
-Use the `Agent` tool with `subagent_type: general-purpose`. Run in background (`run_in_background: true`) so your orchestrator context stays unblocked while the agent works.
+Use the `Agent` tool with `subagent_type: general-purpose`. Dispatch in the foreground (do NOT set `run_in_background`) — the orchestrator has nothing useful to do between dispatching the reviewer and receiving its report (the corrector depends on it), so foreground is simpler and avoids background-notification bookkeeping.
 
 **Reviewer prompt template** (substitute placeholders):
 
@@ -149,7 +149,7 @@ If none of the above triggers exit, proceed to step 3e.
 
 ### Step 3e: Dispatch the Corrector Agent
 
-Use `Agent` tool with `subagent_type: general-purpose`, `run_in_background: true`.
+Use the `Agent` tool with `subagent_type: general-purpose`. Dispatch in the foreground (same reasoning as Step 3b — the orchestrator must wait for the corrector's report before it can continue).
 
 **Corrector prompt template:**
 

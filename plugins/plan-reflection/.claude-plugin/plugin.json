@@ -1,5 +1,5 @@
 {
   "name": "plan-reflection",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-agent reflection loop for plans in ~/.claude/plans/. Independent reviewer agent finds blocking issues, separate corrector agent fixes them, loops up to 3 rounds with convergence protection."
 }
