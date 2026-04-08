@@ -41,12 +41,14 @@ Orchestrator
 
 All Task sub-agents share these rules:
 
+- **颗粒度原则（最高优先级）** — 每条测试用例**只测试一个独立功能点**。sop-layers.md 中每一层（L0-L6）列出的每个 sub-bullet 对应一条独立用例。**禁止**将多个检查点合并为一条多步骤用例；**禁止**将同类型同规则的多个字段合并为一条用例；**禁止**"下拉选项 >5 精简为首末中"。即使检查点相关或相似，也必须拆成独立用例。详见 sop-layers.md Writing Guidelines 的"颗粒度原则"。
+- **自动化友好** — 生成的用例同时作为 Playwright 自动化测试的参考来源。1 条用例对应 1 个 test function / 1 个核心 assertion。`case_name` 必须足够具体以便脚本按名称定位（例如 `"企业全称-必填校验"` 而非 `"企业全称字段校验"`）。多步骤不等于多检查点：一条用例可以有多步 operation（点击 → 输入 → 提交），但只测试 1 个功能点。
 - Read reference files from `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/` as needed (sop-layers.md, json-schema.md, analysis-schema.md, example-analysis.json, example-output.json, excel-template-spec.md)
 - Output ONLY a raw JSON array of test case objects (no wrapper, no markdown fences)
 - Use "TEMP_NNN" as placeholder IDs (e.g., "TEMP_001", "TEMP_002")
 - steps/expected: use `\n` between numbered items, each starting with `N.` (no space after number)
 - precondition: include current page/dialog location, e.g., "用户已登录并打开新增弹窗"
-- Follow the Writing Guidelines and 用例精简规则 in sop-layers.md
+- Follow the Writing Guidelines in sop-layers.md (note: "用例精简规则" has been removed; do NOT merge cases under any circumstance)
 - **去重原则:** UI 呈现（按钮显示/隐藏/置灰/文案）由 Agent A 覆盖。Agent C/D 在步骤中可引用按钮状态作为前提，但不生成重复的 UI 检查用例。
 - **文档章节标签:** 每条用例必须包含 `doc_section` 字段，值为该 group 的 `doc_sections[].id`。根据该用例测试的页面/功能，匹配最相关的 doc_section。
 - **独立可执行:** 禁止"同xxx"引用。每条用例的 steps 和 expected 必须完整具体，不得引用其他用例。
@@ -83,11 +85,13 @@ Dispatch a Task sub-agent with:
 The agent must:
 1. Extract `source_doc`
 2. Extract `common_rules` from the document's public/common section (use defaults from analysis-schema.md if not found)
-3. Identify `module_groups` — scan document for top-level functional modules, each getting its own group with `id`, `name`, `module_code`, `heading_pattern`
+3. Identify `module_groups` — scan document for top-level functional modules, each getting its own group with `id`, `name`, `module_code`, `heading_text`
 4. For each group: build `doc_sections`, `field_table` (with correct `type` and `interactions`), `dispatch` flags, and `business_rules_summary`
 5. Write the result as JSON to `{cache_dir}/analysis.json`
 
 **Critical instruction for the Analysis agent:** Scan the ENTIRE document from start to end. Every top-level functional module must be captured as a module_group. Do not stop after the first few modules. Count headings to verify all are covered.
+
+**Critical instruction — heading_text 必须是字面文本**：`module_groups[].heading_text` 必须是文档中该模块标题行的**逐字复制**，包括所有空格、标点、编号格式。**不要**加任何正则字符（`^`、`\s`、`\d`、`+`、`*` 等）。如果文档里的标题是 `# 1 资产申请管理`，你就写 `# 1 资产申请管理`，一字不差。如果文档原文含有非换行空格 `\xa0` 或全角空格 `\u3000`，照抄即可（split 脚本会 normalize）。heading_text 必须在文档中**唯一匹配**，所以要包含足够的上下文（例如 `## 1.2 本级管理` 而不是 `## 1.2`，否则会和 `## 1.2.1` 碰撞）。详见 `analysis-schema.md` 中的 heading_text 示例。
 
 After the Task completes, the orchestrator:
 1. Reads `{cache_dir}/analysis.json`
@@ -106,15 +110,18 @@ After the Task completes, the orchestrator:
 
 ## Step 2.5: Split Document
 
-Run the document splitting script:
+Run the document splitting script. Use a cross-platform Python probe so Windows (where `python3` may not exist) also works:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/split_doc.py {cache_dir}/analysis.json {doc_md_path} {cache_dir}
+PY=$(command -v python3 >/dev/null 2>&1 && echo python3 || echo python)
+"$PY" "${CLAUDE_PLUGIN_ROOT}/scripts/split_doc.py" {cache_dir}/analysis.json {doc_md_path} {cache_dir}
 ```
 
 This produces:
 - `{cache_dir}/doc_common.md` — content before the first module
 - `{cache_dir}/doc_{grp_id}.md` — common prefix + module content, one per group
+
+If the script fails with `Cannot find heading_text: ...`, it will also output the 5 closest lines in the document as a diagnostic. This usually means the Analysis agent's `heading_text` is slightly off from the document original. Fix `{cache_dir}/analysis.json` manually and rerun this step.
 
 ## Step 3: Dispatch Sub-Agents (Per Group)
 
@@ -153,7 +160,50 @@ Generate test cases following each applicable guideline in L0, L1, L2. Skip item
 
 Layer: L3 (数据输入).
 
-Focus: per-field validation based on type (use the expanded field type taxonomy in sop-layers.md, including textarea, radio, checkbox, search_select, multi_dropdown, date_range). Cross-field interaction patterns (condition_show, condition_required, cascade_fill, inline_create). Uniqueness checks, submit-and-verify. Follow 用例精简规则. Use `common_rules` values for field length/precision limits.
+Focus: per-field validation based on type (use the expanded field type taxonomy in sop-layers.md, including textarea, radio, checkbox, search_select, multi_dropdown, date_range). Cross-field interaction patterns (condition_show, condition_required, cascade_fill, inline_create). Uniqueness checks, submit-and-verify. Use `common_rules` values for field length/precision limits.
+
+#### 字段遍历要求（严格执行）
+
+**第一步 — Checklist 声明**：在开始生成用例前，先在思维中（不写入输出）列出 `field_table` 中所有字段名作为 checklist，例如：
+
+```
+[ ] 登记状态
+[ ] 企业全称
+[ ] 企业简称
+[ ] 企业类型
+...
+```
+
+**第二步 — 按序遍历**：严格按 `field_table` 数组顺序（即文档中字段出现的原始顺序）生成用例。对每个字段：
+
+1. 查找其 `type` 对应的规则（参见 `sop-layers.md` L3）
+2. **对该字段的每一条验证规则生成一条独立的测试用例**（不合并！见下文"颗粒度原则"）
+3. 在 checklist 上标记该字段已覆盖
+
+`sop-layers.md` L3 的"按字段类型分组"是**生成规则参考**（告诉你每种类型该测什么），**不是**组织结构。**不要**按字段类型聚合重排，也不要把所有文本字段放一起再把所有下拉放一起。
+
+**第三步 — 覆盖校验**：生成完毕前检查 checklist，确认 `field_table` 的**每一个字段都至少出现在 1 条测试用例的 `test_point` 或 `case_name` 中**。
+
+#### 颗粒度原则（严格执行）
+
+每条测试用例**只测试一个独立功能点**。以下都是**禁止**的：
+
+- ❌ 一个文本字段的"必填 / 长度 / 特殊字符 / 空格"合并为 1 条用例
+- ❌ 多个文本字段合并为 1 条用例（即便类型和规则相同）
+- ❌ 下拉选项 ">5 个只测首末中" 的精简
+- ❌ 把需求文档中相邻的多个检查点塞进一条用例的 steps
+
+应该是：
+
+- ✅ 每个字段的每一条规则 = 1 条独立用例，`case_name` 形如：
+  - `"企业全称-必填校验"`
+  - `"企业全称-长度上限校验"`
+  - `"企业全称-特殊字符校验"`
+  - `"企业全称-空格校验"`
+- ✅ 每个下拉选项 = 1 条独立用例（即使 >5 个，也要逐个测；若选项极多如 100+ 的行政区划，在需求未明确时标注 `[TODO: 选项数量确认测试策略]`）
+- ✅ 跨字段交互（`condition_show` / `condition_required` / `cascade_fill` / `inline_create`）在遍历完所有字段后单独追加，每个交互场景也是 1 条独立用例
+
+**成本提示**：本原则会让 Agent B 的输出用例数 2-4x 于 v3.0。这是**有意为之**，目的是为 Playwright 自动化引用提供足够的颗粒度。
 
 Write output to `{cache_dir}/partial_{grp_id}_b.json`.
 
@@ -181,7 +231,7 @@ After each group's sub-agents complete, dispatch a merge Task:
 
 The merge agent must:
 1. **Read** all partial JSON files for this group: `partial_{grp_id}_a.json`, `partial_{grp_id}_b.json` (if exists), `partial_{grp_id}_c.json` (if exists), `partial_{grp_id}_d.json` (if exists)
-2. **Read** `{cache_dir}/analysis.json` to get the group's `doc_sections` array
+2. **Read** `{cache_dir}/analysis.json` to get the group's `doc_sections` array and `field_table`
 3. **Group by doc_section** — for each `doc_sections` entry (ordered by `doc_order`), collect all test cases whose `doc_section` matches. Within each group, maintain agent order (A → B → C → D)
 4. **Handle unmatched** — test cases without a valid `doc_section` go into a final "其他" section
 5. **Deduplicate** overlapping test cases within each group (same test_point + case_name)
@@ -190,20 +240,28 @@ The merge agent must:
 8. **Strip** the `doc_section` field from every test case (not needed in final output)
 9. **Build the complete JSON** with meta + style (copy style block exactly from json-schema.md) + sections + merge_rules
 10. **Write** to `{output_dir}/{module_code}_testcases.json`
+11. **字段覆盖率校验**（仅当该 group 的 `dispatch.has_data_entry == true`）：
+    - 从 `analysis.json` 读取该 group 的 `field_table[].name` 列表
+    - 扫描所有合并后的测试用例，收集每条用例 `test_point` 和 `case_name` 中提到的字段名
+    - 对 `field_table` 中的每个字段名，确认它至少出现在 1 条用例里
+    - 若有字段未覆盖，在输出 JSON 的 `meta` 对象下新增 `coverage_warnings` 数组，每项格式：`"[TODO: 漏测字段 {field_name}]"`
+    - 健康指标：预期每个字段出现在 **3 条以上**用例里（因为颗粒度原则要求每条规则一条独立用例）；若某字段 < 2 条，在 stderr 输出提醒但不阻塞
+    - 如有任何 warning，同时在 stderr 输出提醒告知用户
 
 Merge can run immediately after each group's agents complete — no need to wait for other groups.
 
 ## Step 5: Generate Excel (Per Group)
 
-Run the conversion script for each group (orchestrator runs this directly, no Task needed):
+Run the conversion script for each group (orchestrator runs this directly, no Task needed). Use the same cross-platform Python probe:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/convert_to_xlsx.py {json_path} {output_xlsx_path}
+PY=$(command -v python3 >/dev/null 2>&1 && echo python3 || echo python)
+"$PY" "${CLAUDE_PLUGIN_ROOT}/scripts/convert_to_xlsx.py" {json_path} {output_xlsx_path}
 ```
 
 - `{json_path}` = JSON from Step 4 for this group
 - `{output_xlsx_path}` = `{output_dir}/{module_code}_testcases.xlsx`
-- If `openpyxl` is missing: `pip3 install openpyxl`
+- If `openpyxl` is missing: install via `"$PY" -m pip install openpyxl`
 - For Excel format details, see `${CLAUDE_PLUGIN_ROOT}/skills/test-case-generator/references/excel-template-spec.md`
 
 ## Step 6: Cleanup and Report

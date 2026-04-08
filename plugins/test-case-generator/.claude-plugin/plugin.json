@@ -1,5 +1,5 @@
 {
   "name": "test-case-generator",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Generate structured test cases from requirement documents using 7-layer SOP framework. Per-module-group parallel sub-agents + JSON intermediate + formatted Excel output."
 }

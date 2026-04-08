@@ -22,7 +22,7 @@ Phase 2 outputs `analysis.json` to the cache directory. All subsequent phases re
       "id": "grp_1",
       "name": "string — 模块显示名, e.g. '本级管理'",
       "module_code": "string — 用例ID前缀, e.g. 'BJGL'",
-      "heading_pattern": "string — 文档中该模块的标题行正则锚点, e.g. '## 1.2 本级管理'",
+      "heading_text": "string — 该模块在 markdown 文档中的标题行字面文本, e.g. '## 1.2 本级管理'",
       "doc_sections": [
         {
           "id": "sec_01",
@@ -81,10 +81,15 @@ Phase 2 outputs `analysis.json` to the cache directory. All subsequent phases re
 - 每个 group 应包含完整的 CRUD + 审批 + 列表等功能
 - 如文档只有一个模块，`module_groups` 只有 1 个元素
 
-**heading_pattern：**
-- 该模块在 markdown 文档中的标题行文本（含 ## 前缀）
-- 用于 split_doc.py 定位切割点
-- 必须能在文档中唯一匹配
+**heading_text：**
+- 该模块在 markdown 文档中的标题行**字面文本**（含 `#` 前缀），必须与文档原文**逐字一致**，包括所有空格、标点、编号
+- **不得**包含 `\s+`、`^`、`\d`、`+`、`*` 等正则元字符；split 脚本做字面字符串比较，不是正则
+- 用于 split_doc.py 定位切割点，必须能在文档中唯一匹配
+- 示例：
+  - ✅ 正确：`# 1 资产申请管理`
+  - ✅ 正确（含非换行空格 `\xa0`，若文档原文如此就照抄）：`## 1.2\xa0本级管理`
+  - ❌ 错误：`^# 1\s+资产申请管理`（含正则字符）
+  - ❌ 错误：`"# 1"`（过于简短，会与 `# 11`、`# 12` 碰撞）
 
 ### module_groups[].dispatch
 

@@ -1,6 +1,6 @@
 # Henry Hub Marketplace
 
-> Version: v0.7.0 (2026-04-07)
+> Version: v0.8.0 (2026-04-08)
 
 Personal Claude Code plugin marketplace (`henrywen98/henry-hub`).
 

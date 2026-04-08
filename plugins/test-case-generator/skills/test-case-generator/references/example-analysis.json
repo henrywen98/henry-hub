@@ -15,7 +15,7 @@
       "id": "grp_1",
       "name": "资源池",
       "module_code": "JJRCGL-GSBG",
-      "heading_pattern": "## 1.1 资源池",
+      "heading_text": "## 1.1 资源池",
       "doc_sections": [
         { "id": "sec_01", "title": "资源池列表", "heading_level": 2, "page_type": "list", "doc_order": 1 },
         { "id": "sec_02", "title": "新增资源池", "heading_level": 2, "page_type": "form", "doc_order": 2 },
