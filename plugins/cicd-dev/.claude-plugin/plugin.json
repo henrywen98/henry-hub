@@ -1,0 +1,5 @@
+{
+  "name": "cicd-dev",
+  "version": "1.0.0",
+  "description": "CI/CD 流水线生成器：自动检测项目技术栈并生成 GitHub Actions / GitLab CI 流水线，附带 stack_detector 和 pipeline_generator 脚本"
+}

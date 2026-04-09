@@ -1,0 +1,5 @@
+{
+  "name": "docker-dev",
+  "version": "1.0.0",
+  "description": "Docker 开发助手：Dockerfile 优化、docker-compose 编排、多阶段构建、容器安全审计，附带静态分析脚本"
+}

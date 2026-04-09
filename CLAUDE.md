@@ -1,6 +1,6 @@
 # Henry Hub Marketplace
 
-> Version: v0.8.0 (2026-04-08)
+> Version: v0.9.0 (2026-04-09)
 
 Personal Claude Code plugin marketplace (`henrywen98/henry-hub`).
 
@@ -70,7 +70,7 @@ Auto-discovery only scans this pattern. Do NOT use flat files like `skills/<name
 | Bidding | bid-generator |
 | Efficiency | meeting-prep, weekly-report |
 | Visualization | drawio-diagram |
-| Dev Tools | ssot-prompt-engineer, plan-reflection |
+| Dev Tools | ssot-prompt-engineer, plan-reflection, docker-dev, cicd-dev |
 
 ## Versioning
 

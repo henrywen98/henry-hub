@@ -17,6 +17,8 @@
     { "name": "purvar-hld", "description": "璞华概要设计说明书：组装概设 + Word转换", "source": "./plugins/purvar-hld" },
     { "name": "req-to-issues", "description": "需求分析拆解工具：将需求素材分析拆解为 GitHub/GitLab Issue 并批量上传", "source": "./plugins/req-to-issues" },
     { "name": "drawio-diagram", "description": "Draw.io 图表生成器：流程图、架构图、系统拓扑图、业务流程全景图，支持自动核验和复杂流程分区", "source": "./plugins/drawio-diagram" },
-    { "name": "plan-reflection", "description": "多 Agent 计划反思循环：独立 Reviewer 找 blocking issues，独立 Corrector 修正，最多 3 轮循环带收敛保护", "source": "./plugins/plan-reflection" }
+    { "name": "plan-reflection", "description": "多 Agent 计划反思循环：独立 Reviewer 找 blocking issues，独立 Corrector 修正，最多 3 轮循环带收敛保护", "source": "./plugins/plan-reflection" },
+    { "name": "docker-dev", "description": "Docker 开发助手：Dockerfile 优化、docker-compose 编排、多阶段构建、容器安全审计，附带静态分析脚本", "source": "./plugins/docker-dev" },
+    { "name": "cicd-dev", "description": "CI/CD 流水线生成器：自动检测项目技术栈并生成 GitHub Actions / GitLab CI 流水线，附带 stack_detector 和 pipeline_generator 脚本", "source": "./plugins/cicd-dev" }
   ]
 }
