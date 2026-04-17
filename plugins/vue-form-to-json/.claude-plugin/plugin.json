@@ -1,0 +1,5 @@
+{
+  "name": "vue-form-to-json",
+  "version": "1.0.0",
+  "description": "Vue 2 + Element UI 硬编码表单页面提取为 JSON 动态配置数组"
+}

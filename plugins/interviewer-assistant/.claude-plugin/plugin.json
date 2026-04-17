@@ -1,0 +1,10 @@
+{
+  "name": "interviewer-assistant",
+  "version": "1.0.0",
+  "description": "面试官助手：面试前基于简历生成针对性面试题并识别包装痕迹；面试后对照会议纪要评估候选人真实水平",
+  "author": {
+    "name": "Henry",
+    "email": "henrywen030@icloud.com"
+  },
+  "keywords": ["HR", "interview", "recruiting", "hiring", "resume-screening", "candidate-assessment"]
+}
