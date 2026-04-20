@@ -1,0 +1,5 @@
+{
+  "name": "vpn-deploy",
+  "version": "4.2.0",
+  "description": "AI 一键部署自建 VPN（VLESS + XHTTP + TLS + Cloudflare CDN）。在 VPS 上自动化搭建 3X-UI + Xray + Nginx + 伪装站，附故障诊断、加用户、证书续期等运维能力。"
+}
