@@ -22,6 +22,7 @@
     { "name": "cicd-dev", "description": "CI/CD 流水线生成器：自动检测项目技术栈并生成 GitHub Actions / GitLab CI 流水线，附带 stack_detector 和 pipeline_generator 脚本", "source": "./plugins/cicd-dev" },
     { "name": "vue-form-to-json", "description": "Vue 2 + Element UI 硬编码表单页面提取为 JSON 动态配置数组，用于配置化驱动动态表单渲染", "source": "./plugins/vue-form-to-json" },
     { "name": "interviewer-assistant", "description": "面试官助手：面试前基于简历生成针对性面试题并识别包装痕迹；面试后对照会议纪要评估候选人真实水平", "source": "./plugins/interviewer-assistant", "category": "HR" },
-    { "name": "vpn-deploy", "description": "AI 一键部署自建 VPN（VLESS + XHTTP + TLS + Cloudflare CDN）：VPS 上自动化搭建 3X-UI + Xray + Nginx + 伪装站，附故障诊断/加用户/证书续期等运维能力。Shadowsocks / Trojan / WireGuard / OpenVPN 的更强抗检测替代", "source": "./plugins/vpn-deploy", "category": "Infra" }
+    { "name": "vpn-deploy", "description": "AI 一键部署自建 VPN（VLESS + XHTTP + TLS + Cloudflare CDN）：VPS 上自动化搭建 3X-UI + Xray + Nginx + 伪装站，附故障诊断/加用户/证书续期等运维能力。Shadowsocks / Trojan / WireGuard / OpenVPN 的更强抗检测替代", "source": "./plugins/vpn-deploy", "category": "Infra" },
+    { "name": "adhd-pm", "description": "ADHD 友好的个人项目管理 skill 模板：基于飞书多维表格 Base 的 10 种高频操作稳定工作流（加任务/完成/查今日/周报导入），内嵌 7 条 ADHD 行为规则。首次使用需自建 Base 并按 schema.md 填 id", "source": "./plugins/adhd-pm", "category": "PM" }
   ]
 }

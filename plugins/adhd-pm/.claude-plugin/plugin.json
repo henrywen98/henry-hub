@@ -1,0 +1,5 @@
+{
+  "name": "adhd-pm",
+  "version": "1.0.0",
+  "description": "ADHD 友好的个人项目管理 skill 模板：基于飞书多维表格 Base 封装 10 种高频操作稳定工作流（加任务/完成/查今日/周报导入 等），内嵌 7 条 ADHD 行为规则。首次使用需按 schema.md 自建 Base 并填充 id"
+}
