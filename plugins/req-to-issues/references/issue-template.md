@@ -23,11 +23,6 @@
 - [ ] [标准2]
 - [ ] ...
 
-## 影响范围
-
-- 涉及模块：[模块列表]
-- 涉及角色：[用户角色列表]
-
 ## 依赖关系
 
 - 前置：#issue_number [描述]
@@ -43,7 +38,7 @@ P0/P1/P2/P3
 
 ## 标签
 
-feature / enhancement / bug / refactor
+feature / enhancement / bug / docs
 ```
 
 ## 编写规则
@@ -54,6 +49,7 @@ feature / enhancement / bug / refactor
 - 描述用户可感知的行为变化，不描述内部实现
 - 一个 Issue 对应一个独立可交付的功能点
 - 功能点的判断标准：能单独演示给用户看、能独立测试、能独立发布
+- **范围限定在"需求"层**：模块边界、技术栈选型、API 形态、数据库/表结构、前后端拆分方案等属于后续 `brainstorming` skill / 设计阶段的产物，不要写进 Issue
 
 错误示例：
 > 创建一个 RESTful API，包含 GET/POST/PUT/DELETE 端点，使用 JWT 认证
@@ -98,8 +94,9 @@ feature / enhancement / bug / refactor
 | `feature` | 全新功能，之前完全没有 |
 | `enhancement` | 已有功能的改进或扩展 |
 | `bug` | 现有功能的缺陷修复 |
-| `refactor` | 不改变外部行为的内部重构 |
 | `docs` | 文档相关 |
+
+> 注：`refactor` 等纯工程视角的标签不在需求层面 issue 的范围内，由开发在设计/实现阶段（`brainstorming` skill）自行管理。
 
 ### 依赖关系
 

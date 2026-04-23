@@ -18,11 +18,13 @@ $ARGUMENTS
 
 ### 1-5. 与 /req-to-issues 相同
 
-执行 `/req-to-issues` 的步骤 1-5（加载参考资料 → 解析素材 → 澄清 → 拆解总览 → 生成详情）。
+**必须先读取主命令作为事实源**，避免步骤漂移：
 
-读取以下文件获取完整流程指引：
-- `${CLAUDE_PLUGIN_ROOT}/references/issue-template.md`
-- `${CLAUDE_PLUGIN_ROOT}/references/clarify-dimensions.md`
+- `${CLAUDE_PLUGIN_ROOT}/commands/req-to-issues.md` — 完整的步骤 1-5 定义
+- `${CLAUDE_PLUGIN_ROOT}/references/issue-template.md` — Issue 模板和编写规则
+- `${CLAUDE_PLUGIN_ROOT}/references/clarify-dimensions.md` — 模糊点扫描维度
+
+读取后严格按主命令的步骤 1-5 执行（加载参考资料 → 解析素材 → 澄清 → 拆解总览 → 生成详情），仅在步骤 6 分叉：不上传，改为保存到本地。
 
 ### 6. 保存到本地
 
