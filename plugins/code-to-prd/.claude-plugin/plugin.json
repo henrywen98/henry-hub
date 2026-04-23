@@ -1,0 +1,5 @@
+{
+  "name": "code-to-prd",
+  "version": "2.1.2",
+  "description": "从现有代码库逆向生成完整 PRD：自动分析路由、组件、状态管理、API 和用户交互，为每个页面与接口产出可供工程师或 AI 重建的业务文档。支持 React/Vue/Angular/Svelte/Next.js/Nuxt 前端、NestJS/Django/Express/FastAPI 后端及全栈组合。"
+}

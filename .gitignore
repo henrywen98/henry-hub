@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 node_modules/
+
+# Local Claude Code session state
+.claude/
+
+# Pytest temp dirs
+pytest-of-*/
+.pytest_cache/
