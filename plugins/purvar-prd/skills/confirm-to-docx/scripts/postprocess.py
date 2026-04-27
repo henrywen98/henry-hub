@@ -2,24 +2,35 @@
 
 What it does:
 
-1. Insert a cover page with empty fields for the user to fill in Word:
-   主标题（项目名称）/ 副标题（需求确认单）/ 编号 /
-   项目信息 4 列表 / 文件修订历史 4 列表 / 分页符
+1. Insert a cover page (杭州产投-AI应用 standard layout). Pass --project-name
+   /--version/--editor/--date/etc to pre-fill cells; unsupplied fields stay
+   blank for the user to fill in Word.
 2. Normalize every body table:
    - Apply preset column widths by column count and header signature
-     (信息项-备注 narrow/wide; 项目信息 4 列固定宽度; 等等)
    - Center the table, fixed layout, full single-line borders 0.5pt
    - Header row: F2F2F2 grey fill + bold + horizontal center
    - All cells: vertical center; drop first-line indent inside cells
 
-Usage:  python3 postprocess.py path/to/output.docx
+Usage examples:
+
+  python3 postprocess.py out.docx
+  python3 postprocess.py out.docx --project-name "BP 智能评估系统" \
+      --version V1.0 --date 2026-04-27 --req-type initial --changelog 初稿
 """
-import sys
+import argparse
 from pathlib import Path
 
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+
+# Map machine-friendly --req-type values to the four checkbox labels.
+REQ_TYPE_LABELS = [
+    ("initial", "初始需求"),
+    ("new", "新增需求"),
+    ("change", "需求变更"),
+    ("env", "系统环境变更"),
+]
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -302,29 +313,60 @@ def make_cover_table(rows, widths, *, header=False, row_heights=None,
             bold = (header and ri == 0) or (
                 not header and label_bold_predicate(ri, col_idx, text)
             )
-            tc.append(make_paragraph(
-                text or "", sz_half_pt=24, bold=bold, jc=jc,
-                rfonts_eastAsia="等线", no_indent=True,
-            ))
+            # Split on \n so a single cell can contain multiple paragraphs
+            # (used for 需求调研日期 with multiple dates stacked vertically).
+            lines = (text or "").split("\n") if text else [""]
+            for line in lines:
+                tc.append(make_paragraph(
+                    line, sz_half_pt=24, bold=bold, jc=jc,
+                    rfonts_eastAsia="等线", no_indent=True,
+                ))
             tr.append(tc)
             col_idx += span
         tbl.append(tr)
     return tbl
 
 
-def build_cover_blocks():
+def render_req_type_cell(selected: str) -> str:
+    """Render the 需求类型 row text. The matched key gets ☑, others ☐."""
+    parts = []
+    for key, label in REQ_TYPE_LABELS:
+        prefix = "☑" if key == selected else "☐"
+        parts.append(f"{prefix}{label}")
+    return "    ".join(parts)
+
+
+def build_cover_blocks(meta: dict | None = None):
     """Build the cover page matching the 杭州产投-AI应用 standard template.
 
-    Layout (all fields blank for the user to fill in Word):
-      - title 26pt, subtitle 22pt, 编号 right
-      - 6-row project info table with gridSpan merges on rows 0/4/5
-      - 变更记录 label + 4-col changelog table with one empty data row
+    `meta` is a dict of pre-filled field values. Any missing key falls back to
+    a blank cell so the user can hand-fill it in Word.
+
+    Recognised keys:
+      project_name, issue_no, version, manager, editor, date,
+      department, research_dates (newline-separated for multi-line),
+      req_type (one of: initial / new / change / env / ""),
+      changelog (内容), changelog_version (默认沿用 version), changelog_date
     """
+    m = dict(meta or {})
+    title_text = m.get("project_name") or "（项目名称）"
+    issue_no = m.get("issue_no", "")
+    version = m.get("version", "")
+    manager = m.get("manager", "")
+    editor = m.get("editor", "")
+    date = m.get("date", "")
+    department = m.get("department", "")
+    research_dates = m.get("research_dates", "")
+    req_type = m.get("req_type", "")
+    changelog = m.get("changelog", "")
+    changelog_version = m.get("changelog_version") or version
+    changelog_date = m.get("changelog_date") or date
+
     blocks = []
 
-    # Title (project name placeholder) — 26pt bold center
+    # Title — 26pt bold center
     blocks.append(make_paragraph(
-        "（项目名称）", sz_half_pt=52, bold=True, jc="center",
+        title_text, sz_half_pt=52, bold=True, jc="center",
         rfonts_eastAsia="等线", no_indent=True,
     ))
     # Subtitle — 22pt bold center
@@ -333,8 +375,9 @@ def build_cover_blocks():
         rfonts_eastAsia="等线", no_indent=True,
     ))
     # 编号 — right aligned
+    issue_text = f"编号：（{issue_no}）" if issue_no else "编号：(              )"
     blocks.append(make_paragraph(
-        "编号：(              )", sz_half_pt=24, bold=False, jc="right",
+        issue_text, sz_half_pt=24, bold=False, jc="right",
         rfonts_eastAsia="等线", no_indent=True,
     ))
 
@@ -342,12 +385,11 @@ def build_cover_blocks():
     project_info_widths = [1680, 2585, 2086, 2436]  # total 8787
     project_info_row_heights = [907, 919, 743, 870, 1088, 1269]
     project_info_rows = [
-        [("项目名称", 1), ("", 3)],
-        [("需求版本", 1), ("", 1), ("项目经理", 1), ("", 1)],
-        [("编写人", 1), ("", 1), ("最新编辑日期", 1), ("", 1)],
-        [("业务部门", 1), ("", 1), ("需求调研日期", 1), ("", 1)],
-        [("需求类型", 1),
-         ("☐初始需求    ☐新增需求    ☐需求变更    ☐系统环境变更", 3)],
+        [("项目名称", 1), (m.get("project_name", ""), 3)],
+        [("需求版本", 1), (version, 1), ("项目经理", 1), (manager, 1)],
+        [("编写人", 1), (editor, 1), ("最新编辑日期", 1), (date, 1)],
+        [("业务部门", 1), (department, 1), ("需求调研日期", 1), (research_dates, 1)],
+        [("需求类型", 1), (render_req_type_cell(req_type), 3)],
         [("客户确认", 1), ("确认签字：", 3)],
     ]
     blocks.append(make_cover_table(
@@ -364,11 +406,11 @@ def build_cover_blocks():
     ))
     blocks.append(make_blank_paragraph())
 
-    # Changelog table (matches the AI 应用 reference: 4 cols, one empty data row)
+    # Changelog table — pre-fill row 1 with whatever meta provides
     changelog_widths = [1200, 1500, 4587, 1500]  # total 8787
     changelog_rows = [
         ["版本", "日期", "变更内容", "修改人"],
-        ["", "", "", ""],
+        [changelog_version, changelog_date, changelog, editor],
     ]
     blocks.append(make_cover_table(changelog_rows, changelog_widths, header=True))
 
@@ -386,14 +428,40 @@ def build_cover_blocks():
 
 # ---------- Main ----------
 
+def parse_args():
+    p = argparse.ArgumentParser(
+        description="Insert cover + normalize tables in a 需求确认单 docx.",
+    )
+    p.add_argument("docx", help="path to docx (modified in place)")
+    p.add_argument("--project-name", default="",
+                   help="项目名称：填封面主标题 + 项目信息表行1")
+    p.add_argument("--issue-no", default="", help="编号 — 数字或字母，置于括号内")
+    p.add_argument("--version", default="", help="需求版本 (例 V1.0)")
+    p.add_argument("--manager", default="", help="项目经理")
+    p.add_argument("--editor", default="", help="编写人 (同步填变更记录修改人)")
+    p.add_argument("--date", default="", help="最新编辑日期 (YYYY-MM-DD)")
+    p.add_argument("--department", default="", help="业务部门")
+    p.add_argument("--research-dates", default="",
+                   help="需求调研日期；多个日期用换行 \\n 分隔（cell 内多段）")
+    p.add_argument("--req-type", default="",
+                   choices=["", "initial", "new", "change", "env"],
+                   help="需求类型对应的 ☑ 选项；不填则全部留 ☐")
+    p.add_argument("--changelog", default="",
+                   help="变更记录第一行的【变更内容】(例：初稿 / 新增 X 模块)")
+    p.add_argument("--changelog-version", default="",
+                   help="变更记录第一行的【版本】，默认沿用 --version")
+    p.add_argument("--changelog-date", default="",
+                   help="变更记录第一行的【日期】，默认沿用 --date")
+    p.add_argument("--no-cover", action="store_true",
+                   help="只规整表格，不插入封面（已有封面时用）")
+    return p.parse_args()
+
+
 def main():
-    if len(sys.argv) < 2:
-        print("usage: postprocess.py <docx>", file=sys.stderr)
-        sys.exit(1)
-    target = Path(sys.argv[1]).resolve()
+    args = parse_args()
+    target = Path(args.docx).resolve()
     if not target.exists():
-        print(f"file not found: {target}", file=sys.stderr)
-        sys.exit(1)
+        raise SystemExit(f"file not found: {target}")
 
     doc = Document(str(target))
     body = doc.element.body
@@ -401,10 +469,28 @@ def main():
     for tbl in body.findall(W("tbl")):
         normalize_table(tbl)
 
-    cover = build_cover_blocks()
-    first_child = list(body)[0]
-    for blk in cover:
-        first_child.addprevious(blk)
+    if not args.no_cover:
+        # \n in --research-dates is interpreted literally, but shells often pass
+        # the two characters \ + n; normalise both forms.
+        research_dates = args.research_dates.replace("\\n", "\n")
+        meta = {
+            "project_name": args.project_name,
+            "issue_no": args.issue_no,
+            "version": args.version,
+            "manager": args.manager,
+            "editor": args.editor,
+            "date": args.date,
+            "department": args.department,
+            "research_dates": research_dates,
+            "req_type": args.req_type,
+            "changelog": args.changelog,
+            "changelog_version": args.changelog_version,
+            "changelog_date": args.changelog_date,
+        }
+        cover = build_cover_blocks(meta)
+        first_child = list(body)[0]
+        for blk in cover:
+            first_child.addprevious(blk)
 
     doc.save(str(target))
     print(f"postprocessed: {target}")

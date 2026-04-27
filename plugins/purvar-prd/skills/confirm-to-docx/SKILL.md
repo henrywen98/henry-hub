@@ -73,17 +73,47 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/confirm-to-docx/scripts/build_reference.py
 读 md 内容，扫一遍：
 - 检查所有 `![alt](path)` 图片路径是否存在（远程 URL 跳过）
 - 缺图就**列出来询问用户是否继续**，不要直接中断
-- 提醒用户："封面字段会留空，docx 出来后请在 Word 里手填项目名、编号、版本、项目经理、编写日期、修订历史"
+- **主动从上下文推断可填字段**：项目名称（md 文件名/标题）、需求版本（默认 V1.0 如首版）、最新编辑日期（今天）、需求类型（首版默认 initial）、编写人（git config user.name 或问用户），把这些值通过 build.sh 的 `--` 透传给 postprocess。**确实不知道的字段才留空**（如项目经理、业务部门、需求调研日期、客户确认签字、编号）。
 
 ### 2. 一键转换（推荐）
 
 ```bash
+# 不预填封面：所有字段留空待手填
 bash "${CLAUDE_PLUGIN_ROOT}/skills/confirm-to-docx/scripts/build.sh" \
-  "<md文件路径>" \
-  "<输出docx路径>"
+  "<md文件路径>" "<输出docx路径>"
+
+# 预填封面：`--` 之后的参数全部透传给 postprocess.py
+bash "${CLAUDE_PLUGIN_ROOT}/skills/confirm-to-docx/scripts/build.sh" \
+  "<md文件路径>" "<输出docx路径>" \
+  -- \
+  --project-name "<项目名称>" \
+  --version V1.0 \
+  --date 2026-04-27 \
+  --req-type initial \
+  --changelog 初稿 \
+  --editor "<编写人>"
 ```
 
 第二个参数省略时，输出与源 md 同目录、同文件名、扩展名 `.docx`。
+
+### 封面预填字段（postprocess.py CLI 参数）
+
+| 参数 | 对应封面位置 | 推断默认 |
+|---|---|---|
+| `--project-name` | 主标题 + 项目信息行 1 第二格 | md 标题或文件名 |
+| `--issue-no` | 编号括号内 | 留空 |
+| `--version` | 项目信息行 2 + 变更记录行 1 版本 | V1.0（首版） |
+| `--manager` | 项目信息行 2 项目经理 | 留空（一般不知道） |
+| `--editor` | 项目信息行 3 编写人 + 变更记录行 1 修改人 | git config user.name |
+| `--date` | 项目信息行 3 编辑日期 + 变更记录行 1 日期 | 今天 |
+| `--department` | 项目信息行 4 业务部门 | 留空（一般不知道） |
+| `--research-dates` | 项目信息行 4 需求调研日期 | 留空；多日期用 `\n` 分隔 |
+| `--req-type` | 行 5 复选框 ☑ 命中项 | 首版传 `initial` |
+| `--changelog` | 变更记录行 1 变更内容 | 首版传 `初稿` |
+| `--changelog-version` / `--changelog-date` | 变更记录单独覆盖 | 不填则沿用 `--version` / `--date` |
+| `--no-cover` | 跳过封面（已有封面或要重跑表格规整时） | — |
+
+`--req-type` 取值：`initial` / `new` / `change` / `env` / `""`。
 
 ### 3. 或者分步执行（需要排查问题时）
 
@@ -95,15 +125,17 @@ pandoc "<md路径>" \
   --resource-path="<md所在目录>" \
   --from gfm
 
-# 3.2 后处理：插入封面、规整列宽、表头加底色
+# 3.2 后处理：插入封面 + 规整列宽 + 表头加底色（封面字段同样可传）
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/confirm-to-docx/scripts/postprocess.py" \
-  "<docx路径>"
+  "<docx路径>" \
+  --project-name "<项目名称>" --version V1.0 --date 2026-04-27 \
+  --req-type initial --changelog 初稿 --editor "<编写人>"
 ```
 
 ### 4. 告知用户结果
 
-输出文件路径，并提醒：
-- 在 Word 里填封面：项目名称、编号、需求版本、项目经理、编写人、最新编辑日期、业务部门、需求调研日期，并把对应"需求类型"的复选框 ☐ 改成 ☑；变更记录表填首版日期/作者
+输出文件路径，列出哪些字段已预填、哪些留空，并提醒：
+- 留空字段在 Word 里手填（一般是项目经理 / 业务部门 / 需求调研日期 / 编号 / 客户确认签字）
 - 客户确认签字区留高，便于打印纸面手签
 - 检查图片是否都嵌进去了（pandoc 偶尔会在远程图片或异常路径上静默跳过）
 - 如果新加的表格列数不在预设里（2/3/4/6 列），后处理会兜底等宽分布；想要专属列宽请改 `scripts/postprocess.py` 的 `COL_WIDTHS` 字典

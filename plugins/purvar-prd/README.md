@@ -55,6 +55,12 @@
 
 ## 版本历史
 
+### v1.2.0
+
+- confirm-to-docx 支持封面字段预填：postprocess.py 加 `--project-name` `--version` `--manager` `--editor` `--date` `--department` `--research-dates` `--req-type` `--changelog` `--issue-no` 等 CLI 参数；build.sh 用 `--` 分隔后透传。`--req-type` 命中的复选框自动渲染 ☑、其他保持 ☐。
+- `--research-dates` 支持 `\n` 分隔多日期，单 cell 内多段渲染。
+- 变更记录第 1 行支持自动填入版本/日期/编写人/变更内容。
+
 ### v1.1.1
 
 - 修正 confirm-to-docx 封面：对齐杭州产投-AI应用 标准模板 — 6 行项目信息表（项目名称跨3列 / 需求版本+项目经理 / 编写人+最新编辑日期 / 业务部门+需求调研日期 / 需求类型 4 复选框跨3列 / 客户确认签字区跨3列），「文件修订历史」改为「变更记录」（4 列：版本/日期/变更内容/修改人）
