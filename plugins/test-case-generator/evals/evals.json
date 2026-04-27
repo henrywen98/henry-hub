@@ -1,0 +1,38 @@
+{
+  "skill_name": "test-case-generator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "keyword-search-granularity",
+      "prompt": "根据 test-inputs/资源池需求.md 这个需求文档生成详细的测试用例，excel 输出。用例要求：每条用例只测试一个功能点，便于后续 Playwright 自动化引用。",
+      "expected_output": "资源池模块的 Excel 测试用例文件。关键预期：(1) 关键字搜索功能应该至少有 3-5 条独立用例（有效关键字/无效关键字/空格/特殊字符/超长字符串/不输入 等），而不是合并成 1 条；(2) 企业全称字段应该至少有 4 条独立用例（必填校验/长度上限校验/特殊字符校验/空格校验）；(3) 企业类型下拉的每个选项（参股基金/参股基金管理人/股权项目）都应该有独立用例；(4) 用例顺序应按需求文档字段顺序（登记状态 → 企业全称 → 企业简称 → 企业类型 → 统一社会信用代码 → 登记机关）；(5) meta 中可能出现 coverage_warnings 如果有字段被漏掉；(6) 总用例数预期 2-4x 于 v3.0 的等效输入",
+      "files": ["test-inputs/资源池需求.md"],
+      "assertions": [
+        {
+          "id": "keyword_search_split",
+          "text": "关键字搜索功能拆分为至少 3 条独立用例（一用例一功能点）"
+        },
+        {
+          "id": "qyqc_field_coverage",
+          "text": "企业全称字段至少有 3 条独立验证用例"
+        },
+        {
+          "id": "qylx_dropdown_each_option",
+          "text": "企业类型下拉的每个选项都有独立测试"
+        },
+        {
+          "id": "field_order_preserved",
+          "text": "L3 字段用例顺序与需求文档字段顺序一致"
+        },
+        {
+          "id": "no_merged_multi_step_case",
+          "text": "没有出现一条用例含 5+ 个不同输入场景的合并情况"
+        },
+        {
+          "id": "xlsx_file_created",
+          "text": "生成了 .xlsx 文件"
+        }
+      ]
+    }
+  ]
+}
