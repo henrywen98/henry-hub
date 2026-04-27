@@ -9,7 +9,7 @@
     { "name": "ssot-prompt-engineer", "description": "SSOT 规则提取器：从成品文档反向提取生成规则，输出标准化 Skill Blueprint 供 skill-creator 消费", "source": "./plugins/ssot-prompt-engineer" },
     { "name": "test-case-generator", "description": "测试用例生成器", "source": "./plugins/test-case-generator" },
     { "name": "comprehensive-test-generation", "description": "全面测试生成策略", "source": "./plugins/comprehensive-test-generation" },
-    { "name": "purvar-prd", "description": "璞华PRD工作流：生成PRD、需求确认单、澄清PRD", "source": "./plugins/purvar-prd" },
+    { "name": "purvar-prd", "description": "璞华PRD工作流：生成PRD/需求确认单/澄清PRD + confirm-to-docx 把确认单转 Word", "source": "./plugins/purvar-prd" },
     { "name": "ai-pm-feedback-collector", "description": "PM碎片信息收集与洞察整理工具", "source": "./plugins/ai-pm-feedback-collector" },
     { "name": "meeting-prep", "description": "会议准备工具，6 问生成会前文档", "source": "./plugins/meeting-prep" },
     { "name": "weekly-report", "description": "周报生成工具，从聊天记录自动生成会议周报", "source": "./plugins/weekly-report" },
