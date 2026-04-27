@@ -239,7 +239,21 @@ def make_blank_paragraph():
     return make_paragraph("", jc="left")
 
 
-def make_cover_table(rows, widths, *, header=False):
+def make_cover_table(rows, widths, *, header=False, row_heights=None,
+                     label_bold_predicate=None):
+    """Build a cover-page table.
+
+    rows: list of rows. Each row is a list of cells. A cell is either a string
+          (span=1) or a tuple (text, span) for column merging via gridSpan.
+    widths: per-column widths in twips (length == max columns before merging).
+    header: when True, row 0 gets F2F2F2 fill + center + bold.
+    row_heights: optional list of per-row twHeight values; pass [] or None to skip.
+    label_bold_predicate: callable(ri, ci, text) -> bool for non-header rows;
+          defaults to "even-indexed cells are labels (bold)".
+    """
+    if label_bold_predicate is None:
+        label_bold_predicate = lambda _ri, ci, _text: ci % 2 == 0
+
     tbl = OxmlElement("w:tbl")
     tblPr = OxmlElement("w:tblPr")
     tblPr.append(make("tblW", w=sum(widths), type="dxa"))
@@ -264,57 +278,101 @@ def make_cover_table(rows, widths, *, header=False):
 
     for ri, row_cells in enumerate(rows):
         tr = OxmlElement("w:tr")
-        for ci, text in enumerate(row_cells):
+        if row_heights and ri < len(row_heights) and row_heights[ri]:
+            trPr = OxmlElement("w:trPr")
+            trPr.append(make("trHeight", val=row_heights[ri]))
+            tr.append(trPr)
+        col_idx = 0  # logical column index in the underlying grid
+        for cell in row_cells:
+            if isinstance(cell, tuple):
+                text, span = cell
+            else:
+                text, span = cell, 1
             tc = OxmlElement("w:tc")
             tcPr = OxmlElement("w:tcPr")
-            tcPr.append(make("tcW", w=widths[ci], type="dxa"))
+            merged_w = sum(widths[col_idx:col_idx + span])
+            tcPr.append(make("tcW", w=merged_w, type="dxa"))
+            if span > 1:
+                tcPr.append(make("gridSpan", val=span))
             tcPr.append(make("vAlign", val="center"))
             if header and ri == 0:
                 tcPr.append(make("shd", val="clear", color="auto", fill="F2F2F2"))
             tc.append(tcPr)
             jc = "center" if (header and ri == 0) else "left"
-            bold = (header and ri == 0) or (ci % 2 == 0 and not header)
+            bold = (header and ri == 0) or (
+                not header and label_bold_predicate(ri, col_idx, text)
+            )
             tc.append(make_paragraph(
                 text or "", sz_half_pt=24, bold=bold, jc=jc,
                 rfonts_eastAsia="等线", no_indent=True,
             ))
             tr.append(tc)
+            col_idx += span
         tbl.append(tr)
     return tbl
 
 
 def build_cover_blocks():
+    """Build the cover page matching the 杭州产投-AI应用 standard template.
+
+    Layout (all fields blank for the user to fill in Word):
+      - title 26pt, subtitle 22pt, 编号 right
+      - 6-row project info table with gridSpan merges on rows 0/4/5
+      - 变更记录 label + 4-col changelog table with one empty data row
+    """
     blocks = []
+
+    # Title (project name placeholder) — 26pt bold center
     blocks.append(make_paragraph(
         "（项目名称）", sz_half_pt=52, bold=True, jc="center",
         rfonts_eastAsia="等线", no_indent=True,
     ))
+    # Subtitle — 22pt bold center
     blocks.append(make_paragraph(
         "需求确认单", sz_half_pt=44, bold=True, jc="center",
         rfonts_eastAsia="等线", no_indent=True,
     ))
+    # 编号 — right aligned
     blocks.append(make_paragraph(
-        "编号:(              )", sz_half_pt=24, bold=False, jc="right",
+        "编号：(              )", sz_half_pt=24, bold=False, jc="right",
         rfonts_eastAsia="等线", no_indent=True,
     ))
-    blocks.append(make_blank_paragraph())
-    project_info_widths = [1660, 2493, 2076, 2077]
+
+    # Project info table (6 rows, gridSpan on rows 0/4/5)
+    project_info_widths = [1680, 2585, 2086, 2436]  # total 8787
+    project_info_row_heights = [907, 919, 743, 870, 1088, 1269]
     project_info_rows = [
-        ["项目名称", "", "需求版本", ""],
-        ["项目经理", "", "编写日期", ""],
+        [("项目名称", 1), ("", 3)],
+        [("需求版本", 1), ("", 1), ("项目经理", 1), ("", 1)],
+        [("编写人", 1), ("", 1), ("最新编辑日期", 1), ("", 1)],
+        [("业务部门", 1), ("", 1), ("需求调研日期", 1), ("", 1)],
+        [("需求类型", 1),
+         ("☐初始需求    ☐新增需求    ☐需求变更    ☐系统环境变更", 3)],
+        [("客户确认", 1), ("确认签字：", 3)],
     ]
-    blocks.append(make_cover_table(project_info_rows, project_info_widths, header=False))
+    blocks.append(make_cover_table(
+        project_info_rows, project_info_widths,
+        header=False, row_heights=project_info_row_heights,
+    ))
+
+    # Two blank paragraphs + 变更记录 label + one blank
+    blocks.append(make_blank_paragraph())
     blocks.append(make_blank_paragraph())
     blocks.append(make_paragraph(
-        "文件修订历史", sz_half_pt=24, bold=True, jc="left",
+        "变更记录", sz_half_pt=24, bold=True, jc="left",
         rfonts_eastAsia="等线", no_indent=True,
     ))
-    revision_widths = [1882, 1314, 1118, 3992]
-    revision_rows = [
-        ["修订时间", "版本", "作者", "说明"],
+    blocks.append(make_blank_paragraph())
+
+    # Changelog table (matches the AI 应用 reference: 4 cols, one empty data row)
+    changelog_widths = [1200, 1500, 4587, 1500]  # total 8787
+    changelog_rows = [
+        ["版本", "日期", "变更内容", "修改人"],
         ["", "", "", ""],
     ]
-    blocks.append(make_cover_table(revision_rows, revision_widths, header=True))
+    blocks.append(make_cover_table(changelog_rows, changelog_widths, header=True))
+
+    # Page break to push body to a new page
     pb = OxmlElement("w:p")
     pb.append(OxmlElement("w:pPr"))
     r = OxmlElement("w:r")
