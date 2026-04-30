@@ -1,0 +1,113 @@
+{
+  "skill_name": "doc-feature-extractor",
+  "evals": [
+    {
+      "id": 0,
+      "name": "mode-a-detailed-cn-prd",
+      "mode": "A",
+      "prompt": "我这个项目里有一堆 PRD 散在 PRD-开发/、PRD-需求确认/、已签字-PDF/、_归档/ 几个目录下,功能编号挺乱的(01-03 是一组,04/05/06/07 各一个,08 还只有需求确认单)。我想要一份 Excel 把所有功能点和 AI 字段都汇总起来。最上面一张 sheet 是「能力清单」,我要看哪些功能点是可以被其他项目复用的,~6-8 个能力,带能力描述/复用度/成熟度等手填列。第二张 sheet 是项目内业务模块跟踪,~16 行,带开发状态/责任人/优先级等手填列。其余是 FR 明细 / AI 字段 / 生命周期 / README。最好排版能直接看,不用我再调样式。",
+      "expected_output": "6-sheet Excel(能力清单 / 业务模块概览 / 需求明细 / AI 字段定义 / 文档生命周期总览 / README)。能力清单是 Sheet 1 主表,~6-12 行,含手填列(能力描述 / 复用度 / 成熟度 / 已应用项目 / 复用注意事项 / 维护责任人)。业务模块概览 Sheet 2,~16 行,带「所属能力」反向列指向 Sheet 1 + 项目跟踪手填列。深蓝表头、橙黄手填列、斑马纹、首行冻结、首行筛选,生命周期 sheet 的状态备注公式自动算 08 缺 PRD。",
+      "files": [],
+      "assertions": [
+        {"id": "produces_xlsx", "text": "outputs/ 下产出至少一个 .xlsx"},
+        {"id": "multi_sheet", "text": "xlsx 至少有 5 张 sheet"},
+        {"id": "has_capability_sheet", "text": "Sheet 1 是『能力清单』(行数 ≤ 15,跨项目复用粒度)"},
+        {"id": "has_module_overview", "text": "Sheet 2 是『业务模块概览』(子模块级,行数 ≤ 30)"},
+        {"id": "has_field_definitions", "text": "至少一张 sheet 是字段定义"},
+        {"id": "has_lifecycle_or_status", "text": "至少一张 sheet 反映生命周期/状态"},
+        {"id": "coverage_01_03", "text": "包含 01-03 前缀"},
+        {"id": "coverage_08", "text": "包含 08 前缀(仅有需求确认单的功能也被收录)"},
+        {"id": "manual_columns_present", "text": "至少一列看起来是手填的(开发状态/责任人/优先级/复用度/成熟度 等)"},
+        {"id": "has_styling", "text": "表头有非默认填充色"},
+        {"id": "has_freeze_panes", "text": "至少一张 sheet 设了冻结窗格"},
+        {"id": "recalc_zero_errors", "text": "LibreOffice 重算后 0 公式错误"}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "mode-a-vague-cn-prd",
+      "mode": "A",
+      "prompt": "把当前目录里的 PRD 都梳理一下,我要看每个功能现在啥状态、缺啥文档。",
+      "expected_output": "skill 触发并走完工作流。最终是 5-sheet Excel,业务模块概览(~16 行)能让用户一眼看到每个模块状态、文档生命周期总览能反映『缺啥文档』(08 缺 PRD)。",
+      "files": [],
+      "assertions": [
+        {"id": "produces_xlsx", "text": "outputs/ 下产出至少一个 .xlsx"},
+        {"id": "multi_sheet", "text": "xlsx 至少有 4 张 sheet"},
+        {"id": "has_module_overview", "text": "至少一张 sheet 是『业务模块概览』(子模块级)"},
+        {"id": "has_lifecycle_or_status", "text": "至少一张 sheet 反映生命周期/状态(用户明说要看『缺啥文档』)"},
+        {"id": "coverage_08", "text": "包含 08 前缀(用户问『缺啥』,08 缺 PRD 是关键证据)"},
+        {"id": "manual_columns_present", "text": "至少一列看起来是手填的(用户问『啥状态』)"},
+        {"id": "has_freeze_panes", "text": "至少一张 sheet 设了冻结窗格"},
+        {"id": "recalc_zero_errors", "text": "LibreOffice 重算后 0 公式错误"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "mode-a-english-prd",
+      "mode": "A",
+      "prompt": "Hey, I've got a bunch of product spec docs scattered across two folders (PRD-开发 with the dev specs, and PRD-需求确认 with the signed-off requirement confirmations). Some have FR-XXX numbered tables, some only have section headings. Can you build me a consolidated tracker spreadsheet that I can use to assign owners and track development status? Make it look polished — not just raw data dump.",
+      "expected_output": "Same as detailed-cn-prompt but triggered via English. 5-sheet xlsx with module overview as the main sheet for owner assignment.",
+      "files": [],
+      "assertions": [
+        {"id": "produces_xlsx", "text": "outputs/ 下产出至少一个 .xlsx"},
+        {"id": "multi_sheet", "text": "xlsx 至少有 3 张 sheet"},
+        {"id": "has_feature_list", "text": "至少一张 sheet 是功能清单"},
+        {"id": "has_field_definitions", "text": "至少一张 sheet 是字段定义"},
+        {"id": "has_lifecycle_or_status", "text": "至少一张 sheet 反映生命周期/状态"},
+        {"id": "manual_columns_present", "text": "有 owner/status 风格的手填列(用户明说 'assign owners and track status')"},
+        {"id": "has_styling", "text": "表头有非默认填充色(用户明说 'polished — not just raw data dump')"},
+        {"id": "has_freeze_panes", "text": "至少一张 sheet 设了冻结窗格"},
+        {"id": "recalc_zero_errors", "text": "LibreOffice 重算后 0 公式错误"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "mode-c-quotation-xlsx",
+      "mode": "C",
+      "prompt": "我这有一份功能清单报价 xlsx (../杭州资本-二期功能清单报价20250918.xlsx),里面有 9 个 sheet 跨多个客户(产投/科创/人才),每个 sheet 是一个客户的报价清单或招标功能清单。帮我抽成统一的功能模块跟踪表,把所有 sheet 合并到一张里,保留报价列。",
+      "expected_output": "2-sheet Excel(模块报价 + README)。模块报价 sheet 跨所有源 sheet 合并,~600+ 行,列含: 序号 / 来源 sheet / 业务范围 / 模块 / 子模块 / 功能描述 / 报价 / 优先级 / 备注。报价列浅黄高亮。表头深蓝白字,首行冻结,有筛选。'汇总报价'这种总览 sheet 应被自动跳过。",
+      "files": [],
+      "assertions": [
+        {"id": "produces_xlsx", "text": "产出 .xlsx"},
+        {"id": "has_quotation_sheet", "text": "至少一张 sheet 是模块报价 / 功能清单"},
+        {"id": "has_pricing_column", "text": "有报价 / 金额 / 费用 列且至少 50% 行有非空值"},
+        {"id": "skips_summary_sheet", "text": "'汇总报价'sheet 没被当数据抽进来"},
+        {"id": "has_source_sheet_column", "text": "至少有一列标识每行来自哪个源 sheet(便于跨客户对照)"},
+        {"id": "has_freeze_panes", "text": "至少一张 sheet 设了冻结窗格"},
+        {"id": "has_styling", "text": "表头有非默认填充色"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "mode-b-hzcj-solution",
+      "mode": "B",
+      "prompt": "我这有一份建设方案 docx (../杭州产投-投资管理系统(二期)建设方案-V11.docx),想梳理出里面承诺的功能模块清单做成 Excel 表跟踪。",
+      "expected_output": "3-sheet Excel(模块概览 + 章节明细 + README)。模块概览 ~10-30 行,每行一个功能模块(从 Heading 章节抽出),带章节路径、描述。章节明细列出所有 paragraph 与 heading 用于人工审阅。如果文档内嵌'功能模块 + 费用 + 工作量'表,模块概览的预估费用 / 预估工作量 列应回填。",
+      "files": [],
+      "assertions": [
+        {"id": "produces_xlsx", "text": "产出 .xlsx"},
+        {"id": "has_module_overview", "text": "至少一张 sheet 是模块概览/功能模块"},
+        {"id": "has_module_chapter_breakdown", "text": "Heading 切段命中,模块数 ≥ 5(不是把整个文档抽成 1-2 个超大块)"},
+        {"id": "has_chapter_path", "text": "模块概览有'所属章节'/'章节路径'类列,反映模块在文档结构中的位置"},
+        {"id": "has_freeze_panes", "text": "至少一张 sheet 设了冻结窗格"},
+        {"id": "has_styling", "text": "表头有非默认填充色"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "mode-b-cross-project-nantong",
+      "mode": "B",
+      "prompt": "梳理这份升级方案的功能模块: evals/samples/南通-升级方案-V2.4.docx",
+      "expected_output": "3-sheet Excel。模块概览 ~17-20 行,主要模块来自 H3 层级(项目BP解析/尽调报告辅助生成/法务审查报告/合同智能审查/合同智能解析/财报识别/财报智能分析/...)。**关键泛化检验**: 由于该文档是南通项目而非杭州产投,输出**不应包含**杭州产投独有术语(BP 解析回填、296X 行业标签、FR-3xy 编号等);如果出现,说明 skill 没真正脱离项目硬编码。如果文档内嵌'功能模块/费用/工作量'表(南通方案的表 3),费用与工作量列应自动回填。",
+      "files": [],
+      "assertions": [
+        {"id": "produces_xlsx", "text": "产出 .xlsx"},
+        {"id": "has_module_overview", "text": "至少一张 sheet 是模块概览"},
+        {"id": "has_at_least_15_modules", "text": "模块概览 ≥ 15 行(南通升级方案 H3 有约 19 个 AI 功能模块)"},
+        {"id": "has_pricing_backfilled", "text": "至少 10 行模块的'预估费用'或'预估工作量'列非空(从内嵌表抽出)"},
+        {"id": "no_hzcj_specific_terms", "text": "输出文本不含杭州产投独有术语: BP解析回填增强 / 296X / FR-3xy / 投资协议AI辅助审查v2 等"},
+        {"id": "has_freeze_panes", "text": "至少一张 sheet 设了冻结窗格"}
+      ]
+    }
+  ]
+}
