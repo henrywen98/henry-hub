@@ -266,35 +266,42 @@ open <output>.xlsx   # macOS
 
 ### Mode B 输出 (解决方案,3 sheet)
 
-| Sheet | 内容 | 行数级别 |
-|---|---|---|
-| 模块概览 | 每个模块 Heading 一行 + 章节路径 + 描述 + 预估费用 + 预估工作量 | 通常 ~10-30 |
-| 章节明细 | 文档所有 paragraph 与 heading | ~100-300 |
-| README | 用法 + 抽取参数 | 文本 |
+| Sheet | 内容 | 行数级别 | 手填评估列 |
+|---|---|---|---|
+| 模块概览 | 每个模块 Heading 一行 + 章节路径 + 描述 + 预估费用 + 预估工作量 | 通常 ~10-30 | ✓ 复用度 / 成熟度 / 已应用项目 / 维护责任人 / 备注(橙色) |
+| 章节明细 | 文档所有 paragraph 与 heading | ~100-300 | 无 |
+| README | 用法 + 抽取参数 | 文本 | 无 |
+
+重跑契约: 按 `(模块名, 所属章节)` 主键合并保留手填值,不会被覆盖。
 
 ### Mode C 输出 (报价 xlsx,2 sheet)
 
-| Sheet | 内容 | 行数级别 |
-|---|---|---|
-| 模块报价 | 每行一功能子模块, 报价列浅黄高亮 | ~100-1000(跨多 sheet 合并) |
-| README | 用法 + 抽取参数 | 文本 |
+| Sheet | 内容 | 行数级别 | 手填评估列 |
+|---|---|---|---|
+| 模块报价 | 每行一功能子模块, 报价列浅黄高亮 | ~100-1000(跨多 sheet 合并) | ✓ 复用度 / 成熟度 / 已应用项目 / 维护责任人 / 备注(橙色) |
+| README | 用法 + 抽取参数 | 文本 | 无 |
+
+重跑契约: 按 `(来源 sheet, 业务范围, 模块, 子模块)` 主键合并;手填值优先(用户改过的"备注"会盖掉源 xlsx 抽出的备注)。
 
 ### 排版固定(所有 mode)
 - Arial 10,深蓝表头白字
 - 斑马纹 + 灰细边框 + 首行筛选 + 首行冻结
 - Mode A 还有: 橙黄手填列表头、前缀色带、条件格式(已完成行浅绿、缺 PRD 行浅红)
+- Mode B/C: 评估手填列表头橙色 (`FFC000`)
 - Mode C: 报价列浅黄高亮
 
 ## Bundled assets
 
-- `scripts/aggregate.py` — Mode A 主脚本(顶部 EDIT 区块是配置面板)
+- `scripts/aggregate.py` — Mode A 主脚本(顶部 EDIT 区块是配置面板,也支持 `--input <project_root>` 跨项目调用)
 - `scripts/extract_solution.py` — Mode B,解决方案抽取
 - `scripts/extract_quotation.py` — Mode C,报价 xlsx 抽取
+- `scripts/_common.py` — 三脚本共享的结构工具 + 样式 + `load_manual_columns` 手填列保留
 - `scripts/inspect_docx.py` — 调试工具(列 heading + 表头)
 - `scripts/requirements.txt` — `python-docx`、`openpyxl`
 - `references/header_keywords.md` — 中英 PRD 常见表头关键字
 - `references/styling_recipe.md` — openpyxl 排版常量
 - `references/doc-types-anatomy.md` — 4 类样本文档结构指纹
+- `tests/` — pytest 回归测试 (合成 fixtures,无客户文档),改动后跑 `python3 -m pytest tests/ -v`
 - `evals/evals.json` — 测试 prompt(供 skill-creator 用)
 - `evals/samples/` — 跨项目泛化样本(svn:ignore)
 

@@ -1,2 +1,5 @@
 python-docx>=1.2.0
 openpyxl>=3.1.5
+
+# 测试 (开发态用,生产不必装):
+# pytest>=7.0
