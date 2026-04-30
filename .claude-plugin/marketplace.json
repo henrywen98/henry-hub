@@ -23,6 +23,7 @@
     { "name": "vue-form-to-json", "description": "Vue 2 + Element UI 硬编码表单页面提取为 JSON 动态配置数组，用于配置化驱动动态表单渲染", "source": "./plugins/vue-form-to-json" },
     { "name": "interviewer-assistant", "description": "面试官助手：面试前基于简历生成针对性面试题并识别包装痕迹；面试后对照会议纪要评估候选人真实水平", "source": "./plugins/interviewer-assistant", "category": "HR" },
     { "name": "vpn-deploy", "description": "AI 一键部署自建 VPN（VLESS + XHTTP + TLS + Cloudflare CDN）：VPS 上自动化搭建 3X-UI + Xray + Nginx + 伪装站，附故障诊断/加用户/证书续期等运维能力。Shadowsocks / Trojan / WireGuard / OpenVPN 的更强抗检测替代", "source": "./plugins/vpn-deploy", "category": "Infra" },
-    { "name": "code-to-prd", "description": "从现有代码库逆向生成完整 PRD：3 阶段工作流扫描路由/组件/API/交互，支持 React/Vue/Angular/Svelte/Next.js/Nuxt 前端与 NestJS/Django/Express/FastAPI 后端及全栈。移植自 alirezarezvani/claude-skills (MIT)", "source": "./plugins/code-to-prd", "category": "Dev Tools" }
+    { "name": "code-to-prd", "description": "从现有代码库逆向生成完整 PRD：3 阶段工作流扫描路由/组件/API/交互，支持 React/Vue/Angular/Svelte/Next.js/Nuxt 前端与 NestJS/Django/Express/FastAPI 后端及全栈。移植自 alirezarezvani/claude-skills (MIT)", "source": "./plugins/code-to-prd", "category": "Dev Tools" },
+    { "name": "doc-feature-extractor", "description": "从异构业务文档（.docx PRD / 解决方案 / 升级方案、.xlsx 报价 / 功能清单）抽取功能模块，生成带样式、可重跑、保留手填评估列的 Excel 跟踪表。3 种输入模式各自一个独立脚本，核心目标是把核心技术拆成最小可独立定价 / 评估 / 复用的业务单元", "source": "./plugins/doc-feature-extractor", "category": "Document Processing" }
   ]
 }
