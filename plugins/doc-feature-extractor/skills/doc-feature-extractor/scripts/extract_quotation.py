@@ -80,7 +80,7 @@ def find_header_row(ws: Worksheet, max_scan: int = 10) -> tuple[int, list[str]] 
     for r in range(1, min(max_scan, ws.max_row) + 1):
         cells = [_norm(c.value) for c in ws[r]]
         non_empty = [c for c in cells if c]
-        if len(non_empty) < 3:
+        if len(non_empty) < 4:
             continue
         joined = " ".join(non_empty)
         # 必须命中关键字之一
@@ -168,7 +168,11 @@ def extract_sheet(ws: Worksheet) -> list[QuotationRow]:
 
 
 def extract_from_xlsx(path: Path, sheet_filter: str | None) -> list[QuotationRow]:
-    wb = load_workbook(str(path), read_only=True, data_only=True)
+    try:
+        wb = load_workbook(str(path), read_only=True, data_only=True)
+    except Exception as e:
+        print(f"无法打开 xlsx ({path}): {e}", file=sys.stderr)
+        return []
     out: list[QuotationRow] = []
     for ws in wb.worksheets:
         if sheet_filter and sheet_filter not in ws.title:
@@ -304,7 +308,11 @@ def main() -> int:
         return 2
 
     if args.inspect:
-        wb = load_workbook(str(args.input), read_only=True, data_only=True)
+        try:
+            wb = load_workbook(str(args.input), read_only=True, data_only=True)
+        except Exception as e:
+            print(f"无法打开 xlsx ({args.input}): {e}", file=sys.stderr)
+            return 2
         print(f"Sheets ({len(wb.sheetnames)}):")
         for ws in wb.worksheets:
             located = find_header_row(ws)
@@ -323,6 +331,14 @@ def main() -> int:
     output = args.output if args.output else args.input.with_suffix(".功能模块.xlsx")
     write_excel(rows, args.input, args.sheet, output)
     print(f"已生成: {output}")
+
+    if not rows:
+        print(
+            "[警告] 所有 sheet 都未识别到表头/数据,可能 xlsx 结构非标准 "
+            "(用 --inspect 列出 sheet 与表头命中)",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

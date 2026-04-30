@@ -383,7 +383,11 @@ def main() -> int:
         print(f"找不到输入: {args.input}", file=sys.stderr)
         return 2
 
-    doc = DocxDocument(str(args.input))
+    try:
+        doc = DocxDocument(str(args.input))
+    except Exception as e:
+        print(f"无法打开 docx ({args.input}): {e}", file=sys.stderr)
+        return 2
 
     if args.inspect or args.heading_level is None:
         counter = Counter()
@@ -409,6 +413,14 @@ def main() -> int:
     output = args.output if args.output else args.input.with_suffix(".功能模块.xlsx")
     write_excel(modules, sections, args.input, h_level, output)
     print(f"已生成: {output}")
+
+    if not modules:
+        print(
+            "[警告] 未识别到任何模块,可能 heading 层级估错或文档结构非标准 "
+            "(用 --inspect 看 heading 分布,或 --heading-level N 显式指定)",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 
