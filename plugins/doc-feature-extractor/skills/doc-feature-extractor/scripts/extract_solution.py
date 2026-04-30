@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from docx import Document as DocxDocument
+from docx.document import Document as DocxDocumentT
 from docx.oxml.ns import qn
 from docx.table import Table as DocxTable
 from docx.text.paragraph import Paragraph
@@ -105,9 +106,16 @@ def detect_heading_level(doc) -> int:
     for candidate in (3, 2, 4):
         if counter.get(candidate, 0) >= 5:
             return candidate
-    # fallback: 选 count 最多的层级
+    # fallback: 选 count 最多的层级,但排除 H1
+    # H1 通常是文档大标题,只 1 个,选了等于把整篇文档塞成 1 个模块
+    counter.pop(1, None)
     if counter:
         return counter.most_common(1)[0][0]
+    print(
+        "[警告] 文档没有 H2-H6 heading,模块切分无法生效。"
+        "请用 --heading-level N 显式指定。当前 fallback 到 H2。",
+        file=sys.stderr,
+    )
     return 2
 
 
@@ -143,17 +151,19 @@ def is_module_pricing_table(header: list[str]) -> bool:
 
 
 def extract_from_doc(
-    path: Path, module_h_level: int
+    doc: DocxDocumentT, module_h_level: int
 ) -> tuple[list[ModuleEntry], list[SectionEntry], dict[str, dict]]:
     """从 docx 抽取模块 + 章节明细 + 内嵌费用表。
+
+    Args:
+        doc: 已加载的 DocxDocument 对象 (调用方负责 load,异常处理也在调用方)
+        module_h_level: 模块所在 heading 层级
 
     Returns:
         modules: 模块概览(每个 module heading 一项)
         sections: 章节明细(所有 paragraph)
         pricing_map: {module_title: {cost, effort}} — 内嵌表抽出的成本数据
     """
-    doc = DocxDocument(str(path))
-
     modules: list[ModuleEntry] = []
     sections: list[SectionEntry] = []
     pricing_map: dict[str, dict] = {}
@@ -406,7 +416,7 @@ def main() -> int:
         print(f"\n推荐模块 Heading 层级: H{h_level} (用 --heading-level 覆盖)")
         return 0
 
-    modules, sections, pricing = extract_from_doc(args.input, h_level)
+    modules, sections, pricing = extract_from_doc(doc, h_level)
     print(f"模块 Heading 层级: H{h_level}")
     print(f"抽出: 模块={len(modules)} 段落={len(sections)} 内嵌报价表={len(pricing)} 行")
 

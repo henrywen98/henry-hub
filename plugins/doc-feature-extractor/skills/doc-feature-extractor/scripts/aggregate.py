@@ -385,7 +385,7 @@ def file_prefix(name: str) -> str | None:
 
 def heading_level(p: Paragraph) -> int | None:
     style = (p.style.name if p.style else "") or ""
-    m = re.match(r"Heading (\d)", style)
+    m = re.match(r"Heading\s*(\d+)", style, re.IGNORECASE)
     return int(m.group(1)) if m else None
 
 
