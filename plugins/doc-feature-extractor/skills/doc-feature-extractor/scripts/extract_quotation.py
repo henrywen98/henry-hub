@@ -26,9 +26,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
+
+from _common import _apply_data_styles, _apply_header, _font
 
 
 # ---------------------------------------------------------------------------
@@ -185,45 +187,6 @@ def extract_from_xlsx(path: Path, sheet_filter: str | None) -> list[QuotationRow
 # ---------------------------------------------------------------------------
 # Excel 输出
 # ---------------------------------------------------------------------------
-
-
-HEADER_FILL = PatternFill("solid", fgColor="1F4E78")
-HEADER_FONT = Font(name="Arial", size=11, bold=True, color="FFFFFF")
-ZEBRA_FILL = PatternFill("solid", fgColor="F2F2F2")
-PRICE_FILL = PatternFill("solid", fgColor="FFF2CC")  # 报价列浅黄
-_SIDE = Side(style="thin", color="D9D9D9")
-THIN_BORDER = Border(left=_SIDE, right=_SIDE, top=_SIDE, bottom=_SIDE)
-
-
-def _font(bold: bool = False, size: int = 10, color: str = "000000") -> Font:
-    return Font(name="Arial", size=size, bold=bold, color=color)
-
-
-def _apply_header(ws: Worksheet, headers: list[str]):
-    for i, h in enumerate(headers, 1):
-        c = ws.cell(row=1, column=i, value=h)
-        c.font = HEADER_FONT
-        c.fill = HEADER_FILL
-        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        c.border = THIN_BORDER
-    ws.row_dimensions[1].height = 30
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
-
-
-def _apply_data_styles(ws: Worksheet, n_rows: int, n_cols: int, price_col: int | None = None):
-    for r in range(2, n_rows + 2):
-        zebra = ZEBRA_FILL if r % 2 == 0 else None
-        for col in range(1, n_cols + 1):
-            c = ws.cell(row=r, column=col)
-            c.font = _font(size=10)
-            c.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-            c.border = THIN_BORDER
-            if col == price_col:
-                c.fill = PRICE_FILL
-            elif zebra:
-                c.fill = zebra
-        ws.row_dimensions[r].height = 30
 
 
 def write_quotation_sheet(ws: Worksheet, rows: list[QuotationRow]):

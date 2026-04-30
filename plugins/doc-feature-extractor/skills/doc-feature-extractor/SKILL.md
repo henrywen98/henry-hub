@@ -206,6 +206,8 @@ cp <skill_path>/scripts/requirements.txt <project>/scripts/
 
 ```bash
 python scripts/aggregate.py --dry-run
+# 也可以从 skill 目录直接跨项目调用,无需改 EDIT 区块:
+# python <skill_path>/scripts/aggregate.py --input <project_root> --dry-run
 ```
 
 每个前缀都应有非零 FR 行。某前缀 FR=0 字段=0 的处理: 检查表头关键字 → 检查 fallback heading → 检查 PREFIX_RE。**不达标不要进 Step 5**。

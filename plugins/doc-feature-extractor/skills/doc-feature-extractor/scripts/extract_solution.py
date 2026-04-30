@@ -20,7 +20,6 @@ extract_solution.py — 从「解决方案 / 建设方案 / 升级方案」.docx
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from collections import Counter
 from dataclasses import dataclass
@@ -28,13 +27,21 @@ from pathlib import Path
 
 from docx import Document as DocxDocument
 from docx.document import Document as DocxDocumentT
-from docx.oxml.ns import qn
 from docx.table import Table as DocxTable
 from docx.text.paragraph import Paragraph
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
+
+from _common import (
+    _apply_data_styles,
+    _apply_header,
+    _font,
+    heading_level,
+    iter_block_items,
+    normalize,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -67,25 +74,6 @@ class SectionEntry:
 # ---------------------------------------------------------------------------
 # docx 工具
 # ---------------------------------------------------------------------------
-
-
-def iter_block_items(doc):
-    body = doc.element.body
-    for child in body.iterchildren():
-        if child.tag == qn("w:p"):
-            yield Paragraph(child, doc)
-        elif child.tag == qn("w:tbl"):
-            yield DocxTable(child, doc)
-
-
-def heading_level(p: Paragraph) -> int | None:
-    style = (p.style.name if p.style else "") or ""
-    m = re.match(r"Heading\s*(\d+)", style, re.IGNORECASE)
-    return int(m.group(1)) if m else None
-
-
-def normalize(text: str) -> str:
-    return re.sub(r"\s+", " ", text or "").strip()
 
 
 def detect_heading_level(doc) -> int:
@@ -263,42 +251,6 @@ def _extract_pricing_from_table(t: DocxTable, header: list[str]) -> dict[str, di
 # ---------------------------------------------------------------------------
 # Excel 输出
 # ---------------------------------------------------------------------------
-
-HEADER_FILL = PatternFill("solid", fgColor="1F4E78")   # 深蓝
-HEADER_FONT = Font(name="Arial", size=11, bold=True, color="FFFFFF")
-ZEBRA_FILL = PatternFill("solid", fgColor="F2F2F2")
-_SIDE = Side(style="thin", color="D9D9D9")
-THIN_BORDER = Border(left=_SIDE, right=_SIDE, top=_SIDE, bottom=_SIDE)
-
-
-def _font(bold=False, size=10, color="000000"):
-    return Font(name="Arial", size=size, bold=bold, color=color)
-
-
-def _apply_header(ws: Worksheet, headers: list[str]):
-    for i, h in enumerate(headers, 1):
-        c = ws.cell(row=1, column=i, value=h)
-        c.font = HEADER_FONT
-        c.fill = HEADER_FILL
-        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        c.border = THIN_BORDER
-    ws.row_dimensions[1].height = 30
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
-
-
-def _apply_data_styles(ws: Worksheet, n_rows: int, n_cols: int):
-    for r in range(2, n_rows + 2):
-        fill = ZEBRA_FILL if r % 2 == 0 else None
-        for col in range(1, n_cols + 1):
-            c = ws.cell(row=r, column=col)
-            c.font = _font(size=10)
-            c.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-            c.border = THIN_BORDER
-            if fill:
-                c.fill = fill
-        ws.row_dimensions[r].height = 30
-
 
 def _set_column_widths(ws: Worksheet, widths: list[int]):
     for i, w in enumerate(widths, 1):

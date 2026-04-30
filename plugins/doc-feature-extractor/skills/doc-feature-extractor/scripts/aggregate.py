@@ -32,11 +32,9 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
 
 from docx import Document
 from docx.document import Document as DocxDocument
-from docx.oxml.ns import qn
 from docx.table import Table as DocxTable
 from docx.text.paragraph import Paragraph
 from openpyxl import Workbook, load_workbook
@@ -44,6 +42,8 @@ from openpyxl.formatting.rule import FormulaRule
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
+
+from _common import heading_level, iter_block_items, normalize
 
 # =========================================================================
 # ┏━ EDIT FOR YOUR PROJECT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -356,20 +356,6 @@ class CapabilityRow:
 # ---------------------------------------------------------------------------
 
 
-def iter_block_items(doc: DocxDocument) -> Iterator[Paragraph | DocxTable]:
-    """按文档顺序产出段落或表格。"""
-    body = doc.element.body
-    for child in body.iterchildren():
-        if child.tag == qn("w:p"):
-            yield Paragraph(child, doc)
-        elif child.tag == qn("w:tbl"):
-            yield DocxTable(child, doc)
-
-
-def normalize(text: str) -> str:
-    return re.sub(r"\s+", " ", (text or "").strip())
-
-
 _HEADING_NUMBER_RE = re.compile(r"^\d+(\.\d+)*[.\s、]\s*")
 
 
@@ -381,12 +367,6 @@ def strip_heading_number(text: str) -> str:
 def file_prefix(name: str) -> str | None:
     m = PREFIX_RE.match(name)
     return m.group(1) if m else None
-
-
-def heading_level(p: Paragraph) -> int | None:
-    style = (p.style.name if p.style else "") or ""
-    m = re.match(r"Heading\s*(\d+)", style, re.IGNORECASE)
-    return int(m.group(1)) if m else None
 
 
 def table_header(t: DocxTable) -> list[str]:
@@ -1509,17 +1489,42 @@ def write_readme_sheet(ws: Worksheet) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="PRD 功能汇总 Excel 生成器")
-    ap.add_argument("--dry-run", action="store_true", help="只统计抽取行数,不写文件")
     ap.add_argument(
-        "--output-xlsx",
+        "--input",
         type=Path,
         default=None,
         help=(
-            "覆盖输出 xlsx 路径(默认用脚本顶部 OUTPUT_XLSX)。"
+            "项目根目录(含 PRD-开发/ 与 PRD-需求确认/)。"
+            "默认从脚本所在路径向上探测;指定后可跨项目调用,无需改脚本顶部 EDIT 区块。"
+        ),
+    )
+    ap.add_argument("--dry-run", action="store_true", help="只统计抽取行数,不写文件")
+    ap.add_argument(
+        "--output",
+        "--output-xlsx",
+        dest="output_xlsx",
+        type=Path,
+        default=None,
+        help=(
+            "覆盖输出 xlsx 路径(默认用脚本顶部 OUTPUT_XLSX 或 <input>/PRD-功能汇总表.xlsx)。"
             "适合 benchmark / 沙箱场景: 不改脚本就能把产物落到指定目录。"
         ),
     )
     args = ap.parse_args()
+
+    if args.input is not None:
+        global ROOT, PRD_DEV_DIR, PRD_CONFIRM_DIR, SIGNED_PDF_DIR, ARCHIVED_DIR, OUTPUT_XLSX
+        ROOT = args.input.resolve()
+        if not (ROOT / "PRD-开发").is_dir() and not (ROOT / "PRD-需求确认").is_dir():
+            print(
+                f"[警告] {ROOT} 下既无 PRD-开发/ 也无 PRD-需求确认/,可能不是合法项目根",
+                file=sys.stderr,
+            )
+        PRD_DEV_DIR = ROOT / "PRD-开发"
+        PRD_CONFIRM_DIR = ROOT / "PRD-需求确认"
+        SIGNED_PDF_DIR = ROOT / "已签字-PDF"
+        ARCHIVED_DIR = ROOT / "_归档"
+        OUTPUT_XLSX = ROOT / "PRD-功能汇总表.xlsx"
 
     output_path = args.output_xlsx if args.output_xlsx else OUTPUT_XLSX
 
