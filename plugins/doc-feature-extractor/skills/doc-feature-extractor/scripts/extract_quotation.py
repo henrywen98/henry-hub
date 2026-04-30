@@ -30,7 +30,7 @@ from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
-from _common import _apply_data_styles, _apply_header, _font
+from _common import _apply_data_styles, _apply_header, _font, load_manual_columns
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +47,12 @@ class QuotationRow:
     description: str
     price: str
     priority: str
-    note: str
+    # 评估手填列 — 重跑时通过 load_manual_columns 保留
+    reuse_level: str = ""        # 复用度
+    maturity: str = ""           # 成熟度
+    applied_projects: str = ""   # 已应用项目
+    maintainer: str = ""         # 维护责任人
+    note: str = ""               # 备注
 
 
 # ---------------------------------------------------------------------------
@@ -190,8 +195,13 @@ def extract_from_xlsx(path: Path, sheet_filter: str | None) -> list[QuotationRow
 
 
 def write_quotation_sheet(ws: Worksheet, rows: list[QuotationRow]):
-    headers = ["序号", "来源 sheet", "业务范围", "模块", "子模块", "功能描述", "报价", "优先级", "备注"]
-    _apply_header(ws, headers)
+    headers = [
+        "序号", "来源 sheet", "业务范围", "模块", "子模块", "功能描述", "报价", "优先级",
+        # 评估手填列 (橙色表头)
+        "复用度", "成熟度", "已应用项目", "维护责任人", "备注",
+    ]
+    manual_indices = [9, 10, 11, 12, 13]
+    _apply_header(ws, headers, manual_col_indices=manual_indices)
     for i, q in enumerate(rows, 2):
         ws.cell(row=i, column=1, value=i - 1)
         ws.cell(row=i, column=2, value=q.source_sheet)
@@ -201,9 +211,13 @@ def write_quotation_sheet(ws: Worksheet, rows: list[QuotationRow]):
         ws.cell(row=i, column=6, value=q.description)
         ws.cell(row=i, column=7, value=q.price)
         ws.cell(row=i, column=8, value=q.priority)
-        ws.cell(row=i, column=9, value=q.note)
+        ws.cell(row=i, column=9, value=q.reuse_level)
+        ws.cell(row=i, column=10, value=q.maturity)
+        ws.cell(row=i, column=11, value=q.applied_projects)
+        ws.cell(row=i, column=12, value=q.maintainer)
+        ws.cell(row=i, column=13, value=q.note)
     _apply_data_styles(ws, len(rows), len(headers), price_col=7)
-    widths = [6, 22, 16, 22, 22, 50, 14, 10, 22]
+    widths = [6, 22, 16, 22, 22, 50, 14, 10, 12, 12, 22, 14, 22]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
@@ -217,7 +231,9 @@ def write_readme_sheet(ws: Worksheet, source: Path, sheet_filter: str | None,
         ("从 .xlsx 报价表 / 功能清单 抽取功能模块,合并到一张统一表里。", False),
         ("", False),
         ("Sheet 说明", True),
-        ("• 模块报价 — 每行 = 一个功能子模块,带 报价/优先级/备注 列。", False),
+        ("• 模块报价 — 每行 = 一个功能子模块,带 报价/优先级 列。", False),
+        ("    含 5 个橙色手填评估列: 复用度 / 成熟度 / 已应用项目 / 维护责任人 / 备注。", False),
+        ("    重跑时会按 (来源 sheet, 业务范围, 模块, 子模块) 主键合并保留手填值,不会被覆盖。", False),
         ("• README — 本说明。", False),
         ("", False),
         ("本次抽取参数", True),
@@ -239,6 +255,48 @@ def write_readme_sheet(ws: Worksheet, source: Path, sheet_filter: str | None,
         c.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
         ws.row_dimensions[i].height = 22 if bold else 18
     ws.column_dimensions["A"].width = 100
+
+
+_MANUAL_COLS = ("复用度", "成熟度", "已应用项目", "维护责任人", "备注")
+_MANUAL_FIELD_MAP = {
+    "复用度": "reuse_level",
+    "成熟度": "maturity",
+    "已应用项目": "applied_projects",
+    "维护责任人": "maintainer",
+    "备注": "note",
+}
+
+
+def _merge_manual_into_rows(rows: list[QuotationRow], output: Path) -> None:
+    """从已有 xlsx 读取手填列,按 (来源 sheet, 业务范围, 模块, 子模块) 合并回新 rows。"""
+    manual = load_manual_columns(
+        output,
+        sheet_name="模块报价",
+        key_cols=("来源 sheet", "业务范围", "模块", "子模块"),
+        manual_cols=_MANUAL_COLS,
+    )
+    if not manual:
+        return
+    new_keys = {(r.source_sheet, r.business_scope, r.module, r.sub_module) for r in rows}
+    matched = 0
+    for r in rows:
+        key = (r.source_sheet, r.business_scope, r.module, r.sub_module)
+        vals = manual.get(key)
+        if not vals:
+            continue
+        matched += 1
+        # 手填值优先: Mode C 的 "备注" 列是双重身份 (源 xlsx 抽出 + 用户评估手填)。
+        # 用户一旦动过这列,重跑必须保留用户值。空字符串视为"无填写",不会进 vals
+        # (load_manual_columns 已过滤),所以源备注在用户没碰过时仍可见。
+        for col, attr in _MANUAL_FIELD_MAP.items():
+            if col in vals:
+                setattr(r, attr, str(vals[col]))
+    orphans = [k for k in manual if k not in new_keys]
+    print(
+        f"[手填保留] 合并 {matched}/{len(manual)} 行手填值"
+        + (f";丢弃 {len(orphans)} 个孤儿: {orphans[:3]}" if orphans else ""),
+        file=sys.stderr,
+    )
 
 
 def write_excel(rows: list[QuotationRow], source: Path, sheet_filter: str | None, output: Path):
@@ -292,6 +350,7 @@ def main() -> int:
     print(f"抽出 {len(rows)} 行,涵盖 sheet: {sorted({r.source_sheet for r in rows})}")
 
     output = args.output if args.output else args.input.with_suffix(".功能模块.xlsx")
+    _merge_manual_into_rows(rows, output)
     write_excel(rows, args.input, args.sheet, output)
     print(f"已生成: {output}")
 

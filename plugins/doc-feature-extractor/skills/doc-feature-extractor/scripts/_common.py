@@ -21,12 +21,15 @@ _common.py — 三个 extractor 共享的纯结构 + 共用样式工具。
 from __future__ import annotations
 
 import re
+import sys
+from pathlib import Path
 from typing import Iterator
 
 from docx.document import Document as DocxDocumentT
 from docx.oxml.ns import qn
 from docx.table import Table as DocxTable
 from docx.text.paragraph import Paragraph
+from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
@@ -71,6 +74,7 @@ HEADER_FILL = PatternFill("solid", fgColor="1F4E78")  # 深蓝
 HEADER_FONT = Font(name="Arial", size=11, bold=True, color="FFFFFF")
 ZEBRA_FILL = PatternFill("solid", fgColor="F2F2F2")
 PRICE_FILL = PatternFill("solid", fgColor="FFF2CC")  # 报价列浅黄 (extract_quotation 专用)
+MANUAL_HEADER_FILL = PatternFill("solid", fgColor="FFC000")  # 手填评估列橙色表头
 _SIDE = Side(style="thin", color="D9D9D9")
 THIN_BORDER = Border(left=_SIDE, right=_SIDE, top=_SIDE, bottom=_SIDE)
 
@@ -79,12 +83,20 @@ def _font(bold: bool = False, size: int = 10, color: str = "000000") -> Font:
     return Font(name="Arial", size=size, bold=bold, color=color)
 
 
-def _apply_header(ws: Worksheet, headers: list[str]) -> None:
-    """深蓝表头 + 居中 + 冻结首行 + 自动筛选。"""
+def _apply_header(
+    ws: Worksheet,
+    headers: list[str],
+    manual_col_indices: list[int] | None = None,
+) -> None:
+    """深蓝表头 + 居中 + 冻结首行 + 自动筛选。
+
+    manual_col_indices: 1-based 列号列表,这些列的表头改用橙色高亮 (评估手填列)。
+    """
+    manual_set = set(manual_col_indices or [])
     for i, h in enumerate(headers, 1):
         c = ws.cell(row=1, column=i, value=h)
         c.font = HEADER_FONT
-        c.fill = HEADER_FILL
+        c.fill = MANUAL_HEADER_FILL if i in manual_set else HEADER_FILL
         c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
         c.border = THIN_BORDER
     ws.row_dimensions[1].height = 30
@@ -111,3 +123,75 @@ def _apply_data_styles(
             elif zebra:
                 c.fill = zebra
         ws.row_dimensions[r].height = 30
+
+
+# ---------------------------------------------------------------------------
+# 手填列保留 (Mode B/C 重跑不覆盖评估列)
+# ---------------------------------------------------------------------------
+
+
+def load_manual_columns(
+    xlsx_path: Path,
+    sheet_name: str,
+    key_cols: tuple[str, ...],
+    manual_cols: tuple[str, ...],
+    header_row: int = 1,
+) -> dict[tuple, dict[str, object]]:
+    """从已有 xlsx 的指定 sheet 读取手填列,按主键索引返回。
+
+    用于 Mode B/C 重跑时保留用户手工填写的评估列 (复用度/成熟度/已应用项目/
+    维护责任人/备注 等)。aggregate.py (Mode A) 用自己的 load_existing_manual,
+    那个有三层主键合并 + 多版本兼容,不走这里。
+
+    Args:
+        xlsx_path: 旧 xlsx 路径,不存在 / 读不开 / sheet 缺失 → 返回 {}
+        sheet_name: 要读的 sheet 名
+        key_cols: 主键列名 (顺序敏感),共同形成 dict key
+        manual_cols: 要保留的手填列名;只保留有非空值的列
+        header_row: header 所在行号 (默认 1)
+
+    Returns:
+        {(key1_str, key2_str, ...): {manual_col: value, ...}, ...}
+    """
+    if not xlsx_path.exists():
+        return {}
+    try:
+        wb = load_workbook(str(xlsx_path), data_only=True)
+    except Exception as e:
+        print(f"[警告] 无法读取旧 Excel ({e}),跳过手填列保留", file=sys.stderr)
+        return {}
+    if sheet_name not in wb.sheetnames:
+        return {}
+    ws = wb[sheet_name]
+    header = [c.value for c in ws[header_row]]
+    idx = {h: i for i, h in enumerate(header) if h}
+
+    missing_keys = [k for k in key_cols if k not in idx]
+    if missing_keys:
+        print(
+            f"[警告] 旧 xlsx '{sheet_name}' sheet 缺主键列 {missing_keys},跳过手填合并",
+            file=sys.stderr,
+        )
+        return {}
+
+    out: dict[tuple, dict[str, object]] = {}
+    for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+        if all(cell is None or str(cell).strip() == "" for cell in row):
+            continue
+        try:
+            key = tuple(
+                "" if row[idx[k]] is None else str(row[idx[k]]) for k in key_cols
+            )
+        except IndexError:
+            continue
+        manual_values: dict[str, object] = {}
+        for col in manual_cols:
+            i = idx.get(col)
+            if i is None or i >= len(row):
+                continue
+            v = row[i]
+            if v is not None and str(v).strip() != "":
+                manual_values[col] = v
+        if manual_values:
+            out[key] = manual_values
+    return out

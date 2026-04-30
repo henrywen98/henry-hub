@@ -40,6 +40,7 @@ from _common import (
     _font,
     heading_level,
     iter_block_items,
+    load_manual_columns,
     normalize,
 )
 
@@ -59,7 +60,12 @@ class ModuleEntry:
     description: str  # 模块下的 paragraph 文本汇总(裁剪)
     estimated_cost: str = ""    # 内嵌"费用"表抽出
     estimated_effort: str = ""  # 内嵌"工作量"表抽出
-    note: str = ""
+    # 评估手填列 — 重跑时通过 load_manual_columns 保留
+    reuse_level: str = ""        # 复用度 (e.g. "高 / 已用 3 项目")
+    maturity: str = ""           # 成熟度 (POC / Pilot / GA / 维护期)
+    applied_projects: str = ""   # 已应用项目 (分号分隔)
+    maintainer: str = ""         # 维护责任人
+    note: str = ""               # 备注
 
 
 @dataclass
@@ -258,8 +264,13 @@ def _set_column_widths(ws: Worksheet, widths: list[int]):
 
 
 def write_module_sheet(ws: Worksheet, modules: list[ModuleEntry]):
-    headers = ["序号", "模块名", "所属章节", "模块描述", "预估费用", "预估工作量", "备注"]
-    _apply_header(ws, headers)
+    headers = [
+        "序号", "模块名", "所属章节", "模块描述", "预估费用", "预估工作量",
+        # 评估手填列 (橙色表头)
+        "复用度", "成熟度", "已应用项目", "维护责任人", "备注",
+    ]
+    manual_indices = [7, 8, 9, 10, 11]
+    _apply_header(ws, headers, manual_col_indices=manual_indices)
     for i, m in enumerate(modules, 2):
         ws.cell(row=i, column=1, value=m.index)
         ws.cell(row=i, column=2, value=m.title)
@@ -267,9 +278,13 @@ def write_module_sheet(ws: Worksheet, modules: list[ModuleEntry]):
         ws.cell(row=i, column=4, value=m.description)
         ws.cell(row=i, column=5, value=m.estimated_cost)
         ws.cell(row=i, column=6, value=m.estimated_effort)
-        ws.cell(row=i, column=7, value=m.note)
+        ws.cell(row=i, column=7, value=m.reuse_level)
+        ws.cell(row=i, column=8, value=m.maturity)
+        ws.cell(row=i, column=9, value=m.applied_projects)
+        ws.cell(row=i, column=10, value=m.maintainer)
+        ws.cell(row=i, column=11, value=m.note)
     _apply_data_styles(ws, len(modules), len(headers))
-    _set_column_widths(ws, [6, 28, 36, 50, 14, 14, 24])
+    _set_column_widths(ws, [6, 28, 36, 50, 14, 14, 12, 12, 22, 14, 24])
 
 
 def write_section_sheet(ws: Worksheet, sections: list[SectionEntry]):
@@ -293,6 +308,8 @@ def write_readme_sheet(ws: Worksheet, source: Path, module_h_level: int, n_modul
         ("", False),
         ("Sheet 说明", True),
         ("• 模块概览 — 每行 = 一个功能模块,从指定 Heading 层级抽出,带上下级章节路径。", False),
+        ("    含 5 个橙色手填评估列: 复用度 / 成熟度 / 已应用项目 / 维护责任人 / 备注。", False),
+        ("    重跑时会按 (模块名, 所属章节) 主键合并保留手填值,不会被覆盖。", False),
         ("• 章节明细 — 文档所有 paragraph 与 heading,用于人工审阅原文。", False),
         ("• README — 本说明。", False),
         ("", False),
@@ -314,6 +331,50 @@ def write_readme_sheet(ws: Worksheet, source: Path, module_h_level: int, n_modul
         c.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
         ws.row_dimensions[i].height = 22 if bold else 18
     ws.column_dimensions["A"].width = 100
+
+
+_MANUAL_COLS = ("复用度", "成熟度", "已应用项目", "维护责任人", "备注")
+_MANUAL_FIELD_MAP = {
+    "复用度": "reuse_level",
+    "成熟度": "maturity",
+    "已应用项目": "applied_projects",
+    "维护责任人": "maintainer",
+    "备注": "note",
+}
+
+
+def _merge_manual_into_modules(modules: list[ModuleEntry], output: Path) -> None:
+    """从已有 xlsx 读取手填列,按 (模块名, 所属章节) 合并回新 modules。
+
+    重跑时调用,目的是把用户在评估手填列里写的内容 (复用度/成熟度/...) 保留下来,
+    而不是被新一轮抽取的空字符串覆盖。output 不存在时无副作用。
+    """
+    manual = load_manual_columns(
+        output,
+        sheet_name="模块概览",
+        key_cols=("模块名", "所属章节"),
+        manual_cols=_MANUAL_COLS,
+    )
+    if not manual:
+        return
+    new_keys = {(m.title, m.parent_path) for m in modules}
+    matched = 0
+    for m in modules:
+        vals = manual.get((m.title, m.parent_path))
+        if not vals:
+            continue
+        matched += 1
+        # 手填值优先 (含义: 用户在 xlsx 里填了什么,重跑后必须保留)
+        # Mode B 的 5 个评估列都不会被 extract_from_doc 自动写,所以这里实际上是"保留"
+        for col, attr in _MANUAL_FIELD_MAP.items():
+            if col in vals:
+                setattr(m, attr, str(vals[col]))
+    orphans = [k for k in manual if k not in new_keys]
+    print(
+        f"[手填保留] 合并 {matched}/{len(manual)} 行手填值"
+        + (f";丢弃 {len(orphans)} 个孤儿 (新文档没这模块): {orphans[:3]}" if orphans else ""),
+        file=sys.stderr,
+    )
 
 
 def write_excel(modules, sections, source: Path, module_h_level: int, output: Path):
@@ -373,6 +434,7 @@ def main() -> int:
     print(f"抽出: 模块={len(modules)} 段落={len(sections)} 内嵌报价表={len(pricing)} 行")
 
     output = args.output if args.output else args.input.with_suffix(".功能模块.xlsx")
+    _merge_manual_into_modules(modules, output)
     write_excel(modules, sections, args.input, h_level, output)
     print(f"已生成: {output}")
 
